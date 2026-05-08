@@ -22,6 +22,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 @~/.claude/includes/oxc.md
 @~/.claude/includes/quickbeam.md
 @~/.claude/includes/reach.md
+@~/.claude/includes/cloud-agent-environments.md
+@~/.claude/includes/linear-workflow.md
+@~/.claude/includes/delegation.md
+@~/.claude/includes/delegation-rules.md
 
 ---
 
@@ -45,3 +49,9 @@ mix dialyzer.json --quiet
 mix credo --strict --format json
 mix sobelow --mark-skip-all
 ```
+
+## Why these dependency floors
+
+- `quickbeam ~> 0.10.4`: 0.10.3 fixed an upstream QuickJS-NG closure GC bug that
+  affected handlers captured in long-lived runtimes — exactly the WS-streaming
+  pattern in Phase 3 and authenticated WS streams in Task T5. Do not lower.

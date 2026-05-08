@@ -38,7 +38,7 @@ defmodule CcxtOcx.MixProject do
     [
       # Volt — JS on the BEAM (CCXT is a JS library)
       {:oxc, "~> 0.12"},
-      {:quickbeam, "~> 0.10"},
+      {:quickbeam, "~> 0.10.4"},
       {:npm, "~> 0.6"},
 
       # JSON

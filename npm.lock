@@ -1,0 +1,21 @@
+{
+  "lockfileVersion": 1,
+  "packages": {
+    "ccxt": {
+      "dependencies": {
+        "ws": "^8.8.1"
+      },
+      "integrity": "sha512-SKbi1pfi4vKAxiIM4gy1aXLcrGIKZMK83HHpy6/o+ViYKAw+O5Lf55SyXSzvkcyOdokXysFIEjSs32PZt6TCqQ==",
+      "optional_dependencies": {},
+      "tarball": "https://registry.npmjs.org/ccxt/-/ccxt-4.5.52.tgz",
+      "version": "4.5.52"
+    },
+    "ws": {
+      "dependencies": {},
+      "integrity": "sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==",
+      "optional_dependencies": {},
+      "tarball": "https://registry.npmjs.org/ws/-/ws-8.20.0.tgz",
+      "version": "8.20.0"
+    }
+  }
+}

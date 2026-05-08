@@ -22,3 +22,12 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 ccxt_ocx-*.tar
 
+# npm_ex installs node packages here — pulled by `mix deps.get` via npm.lock.
+/node_modules/
+
+# Hex docs cache (pulled on demand).
+/.hex-docs/
+
+# Dialyzer PLTs (per CLAUDE.md, kept out of _build to survive cleanup).
+/priv/plts/
+

@@ -92,7 +92,7 @@ jobs:
         run: mix doctor --raise
 
       - name: Sobelow (honors .sobelow-skips)
-        run: mix sobelow --exit Low
+        run: mix sobelow --skip --exit Low
 
       # Coverage tier — 80% standard floor. ccxt_ocx is young; raise once
       # coverage stabilizes. Signing / money / wire-format code arriving in

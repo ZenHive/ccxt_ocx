@@ -49,12 +49,13 @@ jobs:
           version-file: .tool-versions
           version-type: strict
 
-      - name: Cache deps & _build (covers dialyxir PLT default path)
+      - name: Cache deps, _build, and dialyxir PLTs
         uses: actions/cache@v4
         with:
           path: |
             deps
             _build
+            priv/plts
           key: mix-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
           restore-keys: |
             mix-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-

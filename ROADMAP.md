@@ -21,11 +21,11 @@
 **Phase 1: Foundation — runtime lifecycle and supervision.** `CcxtOcx.Runtime` lands the basic single-runtime handle with the ccxt bundle pre-loaded. Next: pool it (Task 3), normalize JS errors (Task 4), and smoke-test the full data plane (Task 5).
 
 <!-- FOCUS:BEGIN -->
-**Focus phase:** 1 — Foundation — Runtime Lifecycle (2 of 7 done · 0 in progress)
+**Focus phase:** 1 — Foundation — Runtime Lifecycle (2 of 7 done · 1 in progress)
 
 **Last shipped:** no recent shipments
 
-**Up next:** Task 5c — `CcxtOcx.Tiers` — priority-tier classification [D:4/B:7/U:8 → Eff:1.88] 🚀
+**Up next:** Task 5 — Smoke test suite [D:3/B:6/U:5 → Eff:1.83] 🚀
 <!-- FOCUS:END -->
 
 ---
@@ -43,7 +43,7 @@
 | Task 4 | ⬜ | 🎁 **foundation** · `CcxtOcx.Error` — canonical error taxonomy + JS adapter mapping [D:4/B:7/U:6 → Eff:1.62] 🚀 |
 | Task 5 | ⬜ | 🎁 **foundation** · Smoke test suite [D:3/B:6/U:5 → Eff:1.83] 🚀 |
 | Task 5b | ⬜ | 🎁 **foundation** · Bundle-bump verification pipeline [D:5/B:8/U:8 → Eff:1.6] 🚀 |
-| Task 5c | ⬜ | 🎁 **foundation** · `CcxtOcx.Tiers` — priority-tier classification [D:4/B:7/U:8 → Eff:1.88] 🚀 |
+| Task 5c | 🔄 | 🎁 **foundation** · `CcxtOcx.Tiers` — priority-tier classification [D:4/B:7/U:8 → Eff:1.88] 🚀 |
 <!-- TASKS:END -->
 
 ---

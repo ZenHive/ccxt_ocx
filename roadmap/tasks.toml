@@ -170,7 +170,7 @@ CCXT releases multiple times per week. A `mix npm.update ccxt` must not silently
 id = "5c"
 phase = 1
 bundle = "foundation"
-status = "pending"
+status = "in_progress"
 title = "`CcxtOcx.Tiers` — priority-tier classification"
 scores = { d = 4, b = 7, u = 8 }
 scored_at = "2026-05-16"

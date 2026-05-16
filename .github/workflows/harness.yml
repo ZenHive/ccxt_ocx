@@ -1,0 +1,106 @@
+# Deterministic Elixir harness gate for PRs.
+# Closes the Codex-env-blocked-hex.pm gap: every PR push gets format / compile /
+# credo / doctor / sobelow / test+cover / dialyzer evidence as PR checks, instead
+# of needing a local reviewer to fetch the branch and run the suite.
+#
+# ccxt_ocx-specific: `mix npm.install` runs between `deps.get` and `compile`
+# because `CcxtOcx.Tiers` derives its variant inheritance at compile time from
+# the loaded CCXT bundle (node_modules/ccxt/dist/ccxt.browser.min.js). Without
+# the bundle, the module attribute body raises and compile fails.
+#
+# Customization points (search for "[CUSTOMIZE]"):
+#   1. Branch trigger    — `development` is this project's default branch.
+#   2. MIX_ENV            — `test`.
+#   3. Coverage threshold — `80` (standard tier, young codebase). Raise to 85
+#                          once coverage stabilizes. Critical-tier (signing /
+#                          money / wire-format) work should layer a per-module
+#                          95% ratchet as a separate job, not raise this global
+#                          floor.
+#   4. Integration tag    — `integration` (no tagged tests yet; exclude is
+#                          a no-op until they exist).
+
+name: Harness
+
+on:
+  pull_request:
+    branches: [development]
+  push:
+    branches: [development]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harness-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  harness:
+    name: Harness
+    runs-on: ubuntu-latest
+    env:
+      MIX_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: beam
+        uses: erlef/setup-beam@v1
+        with:
+          version-file: .tool-versions
+          version-type: strict
+
+      - name: Cache deps & _build (covers dialyxir PLT default path)
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: mix-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            mix-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-
+
+      - name: Cache node_modules (CCXT bundle is a compile-time dep)
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: npm-${{ runner.os }}-${{ hashFiles('package.json', 'package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
+
+      - run: mix deps.get
+
+      # CCXT bundle is a compile-time dep for `CcxtOcx.Tiers`. npm_ex is pure
+      # Elixir (no Node.js required); `mix npm.install` resolves & fetches
+      # node_modules from the registry.
+      - name: Install npm packages (CCXT bundle)
+        run: mix npm.install
+
+      - name: Compile (warnings as errors)
+        run: mix compile --warnings-as-errors
+
+      - name: Format check
+        run: mix format --check-formatted
+
+      # tag_todo / tag_fixme stay enabled in .credo.exs (TODO/FIXME = tracked-debt
+      # visibility, not regressions). Excluding them here lets the harness fail
+      # only on real Credo regressions — TODO accumulation across sessions
+      # shouldn't gate PRs.
+      - name: Credo (strict, excluding TODO/FIXME design tags)
+        run: mix credo --strict --ignore TagTODO,TagFIXME
+
+      - name: Doctor (--raise overrides .doctor.exs raise=false to gate CI)
+        run: mix doctor --raise
+
+      - name: Sobelow (honors .sobelow-skips)
+        run: mix sobelow --exit Low
+
+      # Coverage tier — 80% standard floor. ccxt_ocx is young; raise once
+      # coverage stabilizes. Signing / money / wire-format code arriving in
+      # later phases should add a per-module 95% ratchet as a separate job
+      # rather than raising this global floor (mixed-tier codebases stuck at
+      # 95% global block too often).
+      - name: Tests + coverage gate (>=80%)
+        run: mix test.json --cover --cover-threshold 80 --summary-only --exclude integration
+
+      - name: Dialyzer
+        run: mix dialyzer

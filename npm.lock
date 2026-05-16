@@ -5,17 +5,27 @@
       "dependencies": {
         "ws": "^8.8.1"
       },
-      "integrity": "sha512-SKbi1pfi4vKAxiIM4gy1aXLcrGIKZMK83HHpy6/o+ViYKAw+O5Lf55SyXSzvkcyOdokXysFIEjSs32PZt6TCqQ==",
+      "has_install_script": true,
+      "integrity": "sha512-CL0Apgg33OjiHuC4uSk8IXmUbUMQhbCIOXARnH/bJ5e2R4tc5q6vKuydyasWoZNy5eiSFZgt5mQ9cO/IdXbiKw==",
       "optional_dependencies": {},
-      "tarball": "https://registry.npmjs.org/ccxt/-/ccxt-4.5.52.tgz",
-      "version": "4.5.52"
+      "tarball": "https://registry.npmjs.org/ccxt/-/ccxt-4.5.54.tgz",
+      "version": "4.5.54"
     },
     "ws": {
       "dependencies": {},
-      "integrity": "sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==",
+      "has_install_script": false,
+      "integrity": "sha512-It4dO0K5v//JtTXuPkfEOaI3uUN87iYPnqo/ZzqCoG3g8uhA66QUMs/SrM0YK7/NAu+r4LMh/9dq2A7k+rHs+w==",
       "optional_dependencies": {},
-      "tarball": "https://registry.npmjs.org/ws/-/ws-8.20.0.tgz",
-      "version": "8.20.0"
+      "tarball": "https://registry.npmjs.org/ws/-/ws-8.20.1.tgz",
+      "version": "8.20.1"
     }
+  },
+  "policy": {
+    "allow_registry_redirects": false,
+    "allowed_registries": [
+      "https://registry.npmjs.org"
+    ],
+    "block_exotic_subdeps": true,
+    "exotic_deps": []
   }
 }

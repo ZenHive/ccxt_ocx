@@ -1,0 +1,13 @@
+{
+  "tier1": ["binance", "bybit", "okx", "deribit", "coinbaseexchange"],
+  "tier2": ["kraken", "kucoin", "gate", "htx", "bitmex", "bitfinex"],
+  "tier3": ["bitget", "bingx", "bitmart", "coinex", "cryptocom", "mexc", "hashkey", "woo",
+           "dydx", "paradex", "apex", "woofipro", "modetrade"],
+  "dex":   ["hyperliquid", "aster", "lighter", "derive"],
+  "_notes": {
+    "source": "Mirrored from ccxt_extract priv/priority_tiers.json. ccxt_ocx ships to hex.pm and cannot path-dep on its sibling — manually port curation changes when they happen there.",
+    "paradex": "T3 today. Candidate for promotion to DEX bucket if/when option-seller consumers need derived recipes (signing, options chain, portfolio margin). StarkNet L2 with perps + options.",
+    "aevo": "Requested for option-seller coverage but NOT in CCXT (no exchange module upstream). Cannot classify until CCXT ships an aevo module.",
+    "bitfinex": "Promoted to T2 for market-maker consumers (maker rebates, WS v2 order entry, advanced order types)."
+  }
+}

@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-`ccxt_ocx` is an Elixir library — purpose TBD (CCXT-family sibling of `ccxt_extract` and `ccxt_client`).
+`ccxt_ocx` is a **macro-first** Elixir wrapper around CCXT — the JS bundle runs inside QuickBEAM, and per-exchange/per-method wrappers are generated at compile time from CCXT's own type definitions. See [ROADMAP.md](ROADMAP.md) for the full vision. CCXT-family sibling of `ccxt_extract` and `ccxt_client`.
 
 ## Standard imports
 
@@ -25,6 +25,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 @~/.claude/includes/quickbeam.md
 @~/.claude/includes/reach.md
 @~/.claude/includes/delegation.md
+
+---
+
+## Design philosophy: macros first
+
+The public API is generated at compile time from CCXT's type definitions — **never hand-written**. CCXT's surface is ~100 exchanges × ~50 unified methods × (REST + WS) × (public + private); hand-written per-method wrappers don't scale. The macro layer is the contract; the adapter behind it (JS via QuickBEAM, or native Elixir for the venues that matter) is an implementation detail.
+
+**Planned macro surface** (none implemented yet — Task 1 `CcxtOcx.Runtime` is the only landed Phase 2 piece; status per macro in [ROADMAP.md](ROADMAP.md)):
+
+| Macro | Phase | Role |
+|---|---|---|
+| `use CcxtOcx, exchanges: [...]` | 2 (Task 6b) | Entrypoint — gates which per-exchange modules compile |
+| `defunified` | 2 (Task 7) | Unified data-plane + trade-plane methods backed by JS |
+| `defexchange` | 2 (Task 9) | Per-exchange capability metadata |
+| `defstreaming` | 3 (Task 11) | WS subscription methods |
+| `defendpoint` | 7 (Task N0) | Native-Elixir REST adapter declarations; declarative `:signed` option |
+| `defconformance` | 7 (Task N3) | JS-vs-native pair specs (sample args, ignored fields, tolerance) |
+
+**When proposing a new macro:** first check whether it folds into an existing macro's option surface. Signing variants belong on `defendpoint`'s `:signed` option, not a new `defsigner`. Rate-limit cost is metadata on `defunified`, not a new macro. New macros earn their cost only when the shape is declarative across **≥3 callsites with the same precedent in the Elixir ecosystem** — see `development-philosophy.md` § "Cite Ecosystem Precedents Before Crying Complexity" for the bar (Phoenix.Router, Ecto.Schema, NimbleOptions, TypedStruct, Ash.Resource).
+
+**Scope is locked at "full unified CCXT surface."** Trade plane (`create_order`, signing, `setLeverage`, `watchMyTrades`) stays in the macro surface; verification (Phase 4 testnet harnesses + byte-equality signing comparison) gates it before mainnet. Don't propose narrowing scope based on hypothetical risk — see ROADMAP § Scope and the project memory on this.
+
+**Companion tooling** Phase 2 leans on:
+- **In the dep tree today:** OXC (parses CCXT's `.d.ts` and `js/src/<exchange>.js` to feed `defunified` / `defendpoint`), QuickBEAM (the macro-generated functions wrap runtime calls via `CcxtOcx.Runtime` — Task 1, done).
+- **To be added when the macro that needs it lands:** NimbleOptions (validates every macro's option keyword per `~/.claude/includes/development-philosophy.md` § "Cite Ecosystem Precedents"). Add `{:nimble_options, "~> 1.x"}` to `mix.exs` as part of Task 7 (`defunified`) — the first macro to consume it.
 
 ---
 

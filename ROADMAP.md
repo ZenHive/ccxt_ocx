@@ -57,10 +57,10 @@
 <!-- TASKS:BEGIN phase=2 -->
 | Task | Status | Notes |
 |------|--------|-------|
-| Task 6 | ⬜ | 🎁 **macros** · Parse `node_modules/ccxt/js/ccxt.d.ts` with OXC [D:6/B:8/U:8 → Eff:1.33] 📋 |
+| Task 6 | ⬜ | 🎁 **macros** · Discover and parse CCXT declaration sources with OXC [D:6/B:8/U:8 → Eff:1.33] 📋 |
 | Task 6b | ⬜ | 🎁 **macros** · `use CcxtOcx` — exchange-scope entrypoint [D:5/B:9/U:9 → Eff:1.8] 🚀 |
 | Task 7 | ⬜ | 🎁 **macros** · `defunified` macro [D:7/B:10/U:9 → Eff:1.36] 📋 |
-| Task 8 | ⬜ | 🎁 **macros** · Typed structs for unified return shapes [D:5/B:8/U:7 → Eff:1.5] 🚀 |
+| Task 8 | ⬜ | 🎁 **macros** · Typed structs for unified return shapes (with declarative field mapping) [D:5/B:8/U:8 → Eff:1.6] 🚀 |
 | Task 9 | ⬜ | 🎁 **macros** · `defexchange` macro [D:6/B:7/U:6 → Eff:1.08] 📋 |
 | Task 10 | ⬜ | 🎁 **macros** · Symbol normalization layer [D:6/B:6/U:5 → Eff:0.92] ⚠️ |
 <!-- TASKS:END -->

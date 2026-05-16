@@ -76,6 +76,38 @@ the inspiration but not the contract. `ccxt_ocx` ships to hex.pm and
 cannot path-dep on its sibling, so curation changes are manually
 ported.
 
+#### Task 5: Smoke test suite
+**Completed** | [D:3/B:6/U:5 → Eff:1.83]
+
+Added `test/ccxt_ocx/smoke_test.exs` — automated replay of the Phase 1
+Tidewave verification: CCXT bundle loads into QuickBEAM, OXC parses
+`Exchange.d.ts` and confirms the smoke method surface, Binance public
+REST returns ticker / order book / OHLCV / trades, and CCXT-pro streams
+3 ticker pushes over WebSocket.
+
+Tag scheme: offline tests (bundle + OXC) carry `:integration`; network
+tests carry `:network`. Both are excluded by default in
+`test/test_helper.exs` so `mix test` stays fast and offline. Opt-in via
+`--include integration`, `--include network`, or both. `flunk/1` with
+multi-line actionable messages on missing-bundle, missing CCXT-pro
+surface, and network failure — no silent skips.
+
+Key decisions:
+
+- One `setup_all` runtime shared across all 7 tests amortizes the
+  ~2-3s bundle-load cost; tests are sequential (`async: false`) but
+  use a fresh CCXT exchange in JS so order is independent
+  (verified with seeds 0 and 1).
+- Symbol is `BTC/USDT:USDT` (USDT-margined linear perpetual). The
+  default `self.ccxt.binance` in the browser bundle loads the
+  derivatives market set; spot would need a different exchange class.
+- The WebSocket test uses top-level await, not an IIFE — `(async () => {...})()`
+  returns a Promise that `QuickBEAM.eval` doesn't resolve through.
+  `JSON.stringify` on the final result also dodges `max_convert_depth`
+  truncation on the nested ticker maps.
+- CCXT constructor takes `timeout: 30000` to give margin over CCXT's
+  default 10s internal fetch timeout, especially on cold loads.
+
 ### CI
 
 Added `.github/workflows/harness.yml` — deterministic Elixir harness

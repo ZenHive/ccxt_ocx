@@ -146,7 +146,7 @@ Define the public error contract once, owned by the wrapper, not by any adapter.
 id = "5"
 phase = 1
 bundle = "foundation"
-status = "pending"
+status = "done"
 title = "Smoke test suite"
 scores = { d = 3, b = 6, u = 5 }
 scored_at = "2026-05-16"

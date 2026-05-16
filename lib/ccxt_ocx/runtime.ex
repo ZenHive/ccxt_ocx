@@ -61,6 +61,10 @@ defmodule CcxtOcx.Runtime do
           bundle_path: String.t()
         }
 
+  # TODO(Task 3): promote the state map + info return into a `defstruct` once
+  # RuntimePool adds more fields — sobelow's struct hint is right but it's not
+  # worth the churn while the shape is still settling.
+
   ## Public API
 
   @doc """
@@ -162,8 +166,14 @@ defmodule CcxtOcx.Runtime do
 
       {:ok, state}
     else
-      {:error, reason} -> {:stop, reason}
-      other -> {:stop, {:unexpected_init_result, other}}
+      {:error, reason} ->
+        {:stop, reason}
+
+      # TODO(Task 4): fold into CcxtOcx.Error taxonomy once it lands. Defensive
+      # catch-all — every helper in the `with` returns {:ok, _} | :ok | {:error, _}
+      # today, so this only fires if a future helper changes shape.
+      other ->
+        {:stop, {:unexpected_init_result, other}}
     end
   end
 
@@ -217,6 +227,9 @@ defmodule CcxtOcx.Runtime do
   end
 
   @spec read_bundle(String.t()) :: {:ok, binary()} | {:error, {:bundle_missing, String.t()}}
+  # sobelow_skip ["Traversal.FileModule"]
+  # Path comes from operator config (:bundle_path opt / app env / hardcoded default),
+  # not from external input.
   defp read_bundle(path) do
     case File.read(path) do
       {:ok, contents} -> {:ok, contents}

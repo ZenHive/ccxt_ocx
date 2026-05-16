@@ -45,6 +45,12 @@ defmodule CcxtOcx.RuntimeTest do
       refute Process.alive?(server)
       assert_receive {:DOWN, ^ref, :process, ^rt, _reason}, 1_000
     end
+
+    test "start_link/0 boots with default opts" do
+      {:ok, server} = CcxtOcx.Runtime.start_link()
+      on_exit(fn -> if Process.alive?(server), do: CcxtOcx.Runtime.stop(server) end)
+      assert Process.alive?(server)
+    end
   end
 
   describe "JS surface" do
@@ -144,5 +150,22 @@ defmodule CcxtOcx.RuntimeTest do
       assert {:error, {:bundle_missing, msg}} = CcxtOcx.Runtime.start_link(bundle_path: bogus)
       assert msg =~ bogus
     end
+
+    test "bundle that fails to eval produces a labeled error" do
+      Process.flag(:trap_exit, true)
+      bogus = Path.join(System.tmp_dir!(), "ccxt-syntax-#{System.unique_integer([:positive])}.js")
+      File.write!(bogus, "const x = (((;")
+      on_exit(fn -> File.rm(bogus) end)
+
+      assert {:error, {:bundle_load_failed, _reason}} =
+               CcxtOcx.Runtime.start_link(bundle_path: bogus)
+    end
+
+    test "terminate/2 with no :rt in state is a no-op" do
+      assert :ok = CcxtOcx.Runtime.terminate(:shutdown, %{})
+    end
+
+    # TODO(Task 3): add :vars / :timeout / :name option-pass-through tests for
+    # eval/3 + call/4 + start_link/1 before RuntimePool work lands.
   end
 end

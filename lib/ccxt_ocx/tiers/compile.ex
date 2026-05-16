@@ -129,12 +129,12 @@ defmodule CcxtOcx.Tiers.Compile do
     (function() {
       const c = self.ccxt.default;
       const names = c.exchanges;
-      const ctorToName = {};
-      for (const name of names) { ctorToName[c[name]] = name; }
+      const ctorToName = new Map();
+      for (const name of names) { ctorToName.set(c[name], name); }
       const result = {};
       for (const name of names) {
         const parent = Object.getPrototypeOf(c[name].prototype).constructor;
-        const parentName = ctorToName[parent];
+        const parentName = ctorToName.get(parent);
         if (parentName) { result[name] = parentName; }
       }
       return result;

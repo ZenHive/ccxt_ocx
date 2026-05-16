@@ -70,10 +70,10 @@ jobs:
       - run: mix deps.get
 
       # CCXT bundle is a compile-time dep for `CcxtOcx.Tiers`. npm_ex is pure
-      # Elixir (no Node.js required); `mix npm.install` resolves & fetches
-      # node_modules from the registry.
+      # Elixir (no Node.js required); `mix npm.ci` installs from the lockfile
+      # for reproducible CI builds (fails if package.json drifts from lockfile).
       - name: Install npm packages (CCXT bundle)
-        run: mix npm.install
+        run: mix npm.ci
 
       - name: Compile (warnings as errors)
         run: mix compile --warnings-as-errors

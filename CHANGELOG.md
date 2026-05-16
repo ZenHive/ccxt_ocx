@@ -43,7 +43,7 @@ authenticated WS streams in Task T5. Rationale recorded in CLAUDE.md
 sessions.
 
 #### Task 5c: `CcxtOcx.Tiers`
-**Completed** | [D:4/B:8/U:7 → Eff:1.88]
+**Completed** | [D:4/B:7/U:8 → Eff:1.88]
 
 Added `CcxtOcx.Tiers` — priority-tier classification mirroring
 `ccxt_extract`'s API surface (18 public functions). Tier roots are

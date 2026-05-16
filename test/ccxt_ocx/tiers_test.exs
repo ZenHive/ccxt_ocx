@@ -215,6 +215,19 @@ defmodule CcxtOcx.TiersTest do
       assert Tiers.has_tier_flags?(strict: true, tier1: true)
       refute Tiers.has_tier_flags?(strict: true, tier1: false)
     end
+
+    test "coerces truthy non-boolean values to boolean true" do
+      assert Tiers.has_tier_flags?(tier1: :yes) === true
+      assert Tiers.has_tier_flags?(tier2: "set") === true
+      assert Tiers.has_tier_flags?(tier3: [1, 2]) === true
+      assert Tiers.has_tier_flags?(dex: 42) === true
+    end
+
+    test "coerces falsy values to boolean false" do
+      assert Tiers.has_tier_flags?([]) === false
+      assert Tiers.has_tier_flags?(tier1: nil) === false
+      assert Tiers.has_tier_flags?(tier1: false) === false
+    end
   end
 
   describe "collect_tier_exchanges/1" do

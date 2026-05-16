@@ -73,7 +73,18 @@ defmodule CcxtOcx.Tiers do
                      ],
                      %{},
                      fn {tier, members}, acc ->
-                       Enum.reduce(members, acc, &Map.put(&2, &1, tier))
+                       Enum.reduce(members, acc, fn member, inner_acc ->
+                         case Map.fetch(inner_acc, member) do
+                           {:ok, existing_tier} ->
+                             raise CompileError,
+                               description:
+                                 "tier collision: #{inspect(member)} appears in both " <>
+                                   "#{inspect(existing_tier)} and #{inspect(tier)}"
+
+                           :error ->
+                             Map.put(inner_acc, member, tier)
+                         end
+                       end)
                      end
                    )
 
@@ -207,7 +218,7 @@ defmodule CcxtOcx.Tiers do
   """
   @spec has_tier_flags?(keyword()) :: boolean()
   def has_tier_flags?(opts) do
-    opts[:tier1] || opts[:tier2] || opts[:tier3] || opts[:dex] || false
+    Enum.any?([:tier1, :tier2, :tier3, :dex], fn tier -> opts[tier] end)
   end
 
   @doc """

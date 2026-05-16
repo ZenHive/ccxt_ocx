@@ -164,7 +164,7 @@
       "id": "5",
       "phase": 1,
       "bundle": "foundation",
-      "status": "pending",
+      "status": "done",
       "title": "Smoke test suite",
       "scores": {
         "d": 3,

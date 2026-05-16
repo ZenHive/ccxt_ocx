@@ -42,4 +42,48 @@ authenticated WS streams in Task T5. Rationale recorded in CLAUDE.md
 "Why these dependency floors" so the floor doesn't drift in future
 sessions.
 
+#### Task 5c: `CcxtOcx.Tiers`
+**Completed** | [D:4/B:7/U:8 → Eff:1.88]
+
+Added `CcxtOcx.Tiers` — priority-tier classification mirroring
+`ccxt_extract`'s API surface (18 public functions). Tier roots are
+hand-curated in `priv/priority_tiers.json` (5 tier1 / 6 tier2 / 13 tier3
+/ 4 dex). Variant inheritance — `binance → binanceus`, `htx → huobi`,
+`gate → gateio`, etc. — is derived at compile time by walking
+`Object.getPrototypeOf` on every exchange class in the loaded CCXT
+bundle.
+
+Key decisions:
+
+- Inheritance is **provable** from the JS class graph, not name-matched.
+  The webpack-minified bundle returns mangled `constructor.name`, so the
+  walk builds a `ctor → name` map keyed on the preserved IDs in
+  `self.ccxt.default.exchanges` and compares prototypes by reference
+  identity.
+- Compile-time JS eval runs in a throwaway raw `QuickBEAM.start/1`,
+  not via `CcxtOcx.Runtime` (which isn't supervised during `mix compile`).
+- `@external_resource` annotations on both the bundle path and
+  `priv/priority_tiers.json` mean recompile triggers when CCXT bumps
+  *or* curation changes — no manual cache invalidation.
+- First-compile cost is ~2.7s (much lower than the original ~30s
+  estimate). CI cold builds pay it once.
+- No runtime cache. The module attribute body freezes the variant map
+  into a `%{id => tier}` lookup; runtime cost is zero JS, pure O(1)
+  Elixir map lookups.
+
+Curation drift policy: `ccxt_extract`'s `priv/priority_tiers.json` is
+the inspiration but not the contract. `ccxt_ocx` ships to hex.pm and
+cannot path-dep on its sibling, so curation changes are manually
+ported.
+
+### CI
+
+Added `.github/workflows/harness.yml` — deterministic Elixir harness
+gate for PRs targeting `development`. Steps: setup-beam from
+`.tool-versions` → cache deps + node_modules → `mix deps.get` →
+`mix npm.install` (CCXT bundle is a compile-time dep for
+`CcxtOcx.Tiers`) → compile with warnings-as-errors → format check →
+credo strict (excluding `TagTODO`/`TagFIXME`) → doctor → sobelow →
+tests with ≥80% coverage gate → dialyzer.
+
 [Unreleased]: https://github.com/efries/ccxt_ocx/compare/HEAD

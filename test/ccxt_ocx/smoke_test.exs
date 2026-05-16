@@ -46,7 +46,7 @@ defmodule CcxtOcx.SmokeTest do
     end
 
     {:ok, server} = CcxtOcx.Runtime.start_link(name: :smoke_runtime)
-    on_exit(fn -> CcxtOcx.Runtime.stop(server) end)
+    on_exit(fn -> if Process.alive?(server), do: CcxtOcx.Runtime.stop(server) end)
     {:ok, server: server}
   end
 
@@ -235,7 +235,7 @@ defmodule CcxtOcx.SmokeTest do
       No API keys are required (public endpoints only).
 
       Re-run online:
-        mix test test/ccxt_ocx/smoke_test.exs --include integration
+        mix test test/ccxt_ocx/smoke_test.exs --include integration --include network
 
       Offline (skip network, keep bundle + OXC checks):
         mix test test/ccxt_ocx/smoke_test.exs --include integration --exclude network

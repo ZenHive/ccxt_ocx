@@ -170,10 +170,11 @@ CCXT releases multiple times per week. A `mix npm.update ccxt` must not silently
 id = "5c"
 phase = 1
 bundle = "foundation"
-status = "in_progress"
+status = "done"
 title = "`CcxtOcx.Tiers` — priority-tier classification"
 scores = { d = 4, b = 7, u = 8 }
 scored_at = "2026-05-16"
+shipped_in = "e5609ae (PR #1)"
 body = """
 Mirror ccxt_extract's tier concept locally — no cross-project coupling, since ccxt_ocx ships to hex and can't path-dep on a sibling. Same four buckets (`:tier1`, `:tier2`, `:tier3`, `:dex`) with the same hand-curated roots (tier1: binance, bybit, okx, deribit, coinbaseexchange; tier2: kraken, kucoin, gate, htx, bitmex, bitfinex; etc.) committed to `priv/priority_tiers.json`. Variant/alias inheritance (binance → binanceus/binancecoinm/binanceusdm; okx → okxus/myokx; htx → huobi) derived at compile time from the **loaded CCXT bundle's class hierarchy** — read `Object.getPrototypeOf` chains via QuickBEAM, no `priv/discoveries/` dependency. Public API mirrors ccxt_extract: `tier1_members/0`, `members_for_tier/1`, `get_priority_tier/1`, `tier1?/1`, `collect_tier_exchanges/1`. Used downstream by: Phase 3 WS verification spread, Phase 4 testnet harnesses (`mix ccxt_ocx.testnet --tier1`), Phase 5 rate-limit pinning priority, Phase 7 native-port scoping (N4–N7 = "Tier 1 venues"). **Drift policy:** ccxt_extract's `priority_tiers.json` is the inspiration but not the contract — when curation changes there, manually port relevant changes here. Document the divergence risk in the moduledoc.
 """

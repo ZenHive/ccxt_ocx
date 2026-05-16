@@ -24,7 +24,7 @@
 | Task | Status | Notes |
 |------|--------|-------|
 | Task 3: `CcxtOcx.RuntimePool` supervisor | ⬜ | Pools the Phase-1 Runtime; wires into Application supervision |
-| Task 4: JS error → Elixir error normalization | ⬜ | Canonical error shape for downstream wrappers |
+| Task 4: Canonical error taxonomy + JS adapter mapping | ⬜ | `CcxtOcx.Error` owns the contract; adapters translate into it |
 | Task 5: Smoke test suite | ⬜ | `:integration`/`:network`-tagged data-plane verification |
 
 ---
@@ -42,8 +42,8 @@
 - [ ] **Task 3: `CcxtOcx.RuntimePool` supervisor** [D:5/B:8/U:7 → Eff:1.5] 🚀
       `QuickBEAM.Pool.start_link/1` wired into the application supervision tree, sized per `(exchange, market_type)`. Init function loads the bundle once. Each pool checkout returns a runtime that already has ccxt evaluated. Pre-warmed; lazy spawn allowed for low-traffic exchanges.
 
-- [ ] **Task 4: JS error → Elixir error normalization** [D:4/B:7/U:6 → Eff:1.6] 🚀
-      Map `%QuickBEAM.JS.Error{name: "BadSymbol"}`, `"NetworkError"`, `"RateLimitExceeded"`, etc. to Elixir tagged tuples (`{:error, :bad_symbol, msg}`). One canonical error module so every downstream wrapper returns the same shape.
+- [ ] **Task 4: `CcxtOcx.Error` — canonical error taxonomy + JS adapter mapping** [D:4/B:7/U:6 → Eff:1.6] 🚀
+      Define the public error contract once, owned by the wrapper, not by any adapter. `CcxtOcx.Error` enumerates the canonical tags (`:bad_symbol`, `:network`, `:rate_limit`, `:auth`, `:insufficient_funds`, `:invalid_order`, `:order_not_found`, `:exchange_not_available`, `:unknown`); every wrapper returns `{:error, tag, %CcxtOcx.Error{...}}` regardless of which adapter handled the call. **JS adapter responsibility:** map CCXT's error class names (`%QuickBEAM.JS.Error{name: "BadSymbol" | "NetworkError" | "RateLimitExceeded" | ...}`) to canonical tags — small stable table, since CCXT's maintainers own the venue-code → CCXT-class mapping upstream. **Native adapters (Phase 7) responsibility:** carry their own full venue-code → canonical-tag tables; no upstream maintainer doing it for them. Task 5b's bundle-bump pipeline catches new CCXT error classes we haven't mapped (assertion: zero `:unknown` tags in the smoke suite). Task N3's conformance harness catches when CCXT-class drift means the native adapter's venue-code table is stale (see N3). The taxonomy itself is the contract — adapters translate into it; consumers never see adapter-specific shapes.
 
 - [ ] **Task 5: Smoke test suite** [D:3/B:6/U:5 → Eff:1.8] 🚀
       ExUnit tag `:integration` (off by default), tagged `:network` for tests that hit Binance. Repeat the live verification done in tidewave: bundle loads, OXC parses, ticker/orderbook/OHLCV/trades arrive, WS streams 3 ticker pushes. Use `flunk/1` with actionable messages on missing-network — never skip silently.
@@ -185,7 +185,11 @@
       `Application.get_env(:ccxt_ocx, :adapter_routing)` keyed by `{exchange, method_family}`, default `:js`. Macro emits a dispatch in every wrapper: native if configured, else fall back to the JS adapter. Per-method override so migration is incremental, not big-bang. No restart required to flip a method.
 
 - [ ] **Task N3: Conformance harness** [D:6/B:9/U:9 → Eff:1.5] 🚀
-      *The leverage point — and a hard gate on N4–N7.* For any `(exchange, method)`, run the JS path *and* the native path against the same input in parallel; assert struct equality after normalization. Plus T4's byte-equal signing comparison for private methods. Before any method flips to `:native` in production, conformance must agree across N runs on testnet *and* mainnet read-only. ExUnit + property-based generators for the input space. Land N3 *before* N4 — without it, "the native port works" is unfalsifiable.
+      *The leverage point — and a hard gate on N4–N7.* For any `(exchange, method)`, run the JS path *and* the native path against the same input in parallel and assert:
+      1. **Happy-path struct equality** after Task 4 canonical-shape normalization (`Ticker`, `OrderBook`, `Trade`, etc. byte-equal).
+      2. **Error-tag parity** on failure inputs (invalid symbol, insufficient balance, malformed order, expired API key, rate-limit trigger) — both adapters must return the same `{:error, tag, _}` from the Task 4 canonical taxonomy.
+      3. **Signed-payload byte equality** for private methods (delegated to T4).
+      Error-tag parity doubles as the **drift-detector for venue error codes**: when a venue adds a new error code, CCXT's maintainers map it to a CCXT class in a release; bundle-bump (Task 5b) propagates it; the JS adapter returns the correct canonical tag; the native adapter — still on its old venue-code table — returns `:unknown` or a wrong tag, and conformance fails. The harness tells us exactly which `(exchange, error_code)` pair needs porting, without anyone reading CCXT's git log for error changes. Before any method flips to `:native` in production, conformance must agree across N runs on testnet *and* mainnet read-only, happy-path *and* error-path. ExUnit + property-based generators for the input space, including a generator that synthesizes invalid inputs to exercise the error surface. Land N3 *before* N4 — without it, "the native port works" is unfalsifiable.
 
 - [ ] **Task N4: Native Binance — REST public** [D:5/B:8/U:6 → Eff:1.4] 🚀
       Lowest blast radius first: `fetchMarkets`, `fetchCurrencies`, `fetchOHLCV`, `fetchTicker`, `fetchOrderBook`. With N0 in place, the bulk is auto-generated `defendpoint` declarations from CCXT's source; hand-work is reviewing the extracted parser functions and patching any quirks the extractor missed. Conformance harness must agree before ship. *Score reflects N0 leverage — without N0, this would be D:7/Eff:1.0.*

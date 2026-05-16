@@ -37,31 +37,31 @@ defmodule CcxtOcx.MixProject do
   defp deps do
     [
       # Volt — JS on the BEAM (CCXT is a JS library)
-      {:oxc, "~> 0.12"},
-      {:quickbeam, "~> 0.10.4"},
-      {:npm, "~> 0.6"},
+      {:oxc, "~> 0.12.1"},
+      {:quickbeam, "~> 0.10.12"},
+      {:npm, "~> 0.7.1"},
 
       # JSON
-      {:jason, "~> 1.4"},
+      {:jason, "~> 1.4.5"},
 
       # Dev/test tooling
-      {:ex_unit_json, "~> 0.4", only: [:dev, :test], runtime: false},
-      {:dialyzer_json, "~> 0.2", only: [:dev, :test], runtime: false},
-      {:styler, "~> 1.11", only: [:dev, :test], runtime: false},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:ex_doc, "~> 0.40", only: :dev, runtime: false},
-      {:doctor, "~> 0.22", only: [:dev, :test], runtime: false},
-      {:sobelow, "~> 0.14", only: [:dev, :test], runtime: false},
+      {:ex_unit_json, "~> 0.4.3", only: [:dev, :test], runtime: false},
+      {:dialyzer_json, "~> 0.2.0", only: [:dev, :test], runtime: false},
+      {:styler, "~> 1.11.0", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7.18", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4.7", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.40.2", only: :dev, runtime: false},
+      {:doctor, "~> 0.23.0", only: [:dev, :test], runtime: false},
+      {:sobelow, "~> 0.14.1", only: [:dev, :test], runtime: false},
 
       # Code analysis
-      {:ex_dna, "~> 1.5", only: [:dev, :test], runtime: false},
-      {:ex_ast, "~> 0.11", only: [:dev, :test], runtime: false},
-      {:reach, "~> 2.2", only: [:dev, :test], runtime: false},
+      {:ex_dna, "~> 1.5.1", only: [:dev, :test], runtime: false},
+      {:ex_ast, "~> 0.12.0", only: [:dev, :test], runtime: false},
+      {:reach, "~> 2.3.4", only: [:dev, :test], runtime: false},
 
       # Tidewave (non-Phoenix)
-      {:tidewave, "~> 0.5", only: :dev},
-      {:bandit, "~> 1.11", only: :dev}
+      {:tidewave, "~> 0.5.6", only: :dev},
+      {:bandit, "~> 1.11.1", only: :dev}
     ]
   end
 

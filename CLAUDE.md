@@ -49,8 +49,10 @@ mix credo --strict --format json
 mix sobelow --mark-skip-all
 ```
 
-## Why these dependency floors
+## Dependency notes
 
-- `quickbeam ~> 0.10.4`: 0.10.3 fixed an upstream QuickJS-NG closure GC bug that
-  affected handlers captured in long-lived runtimes — exactly the WS-streaming
-  pattern in Phase 3 and authenticated WS streams in Task T5. Do not lower.
+- **Do not lower the `quickbeam` floor below 0.10.4.** quickbeam 0.10.3 fixed
+  an upstream QuickJS-NG closure GC bug affecting handlers captured in
+  long-lived runtimes — exactly the WS-streaming pattern this library uses.
+  Bumps within 0.10.x are fine. Run `mix hex.outdated quickbeam` for the
+  current state.

@@ -127,11 +127,13 @@ id = "4"
 phase = 1
 bundle = "foundation"
 status = "pending"
-title = "JS error → Elixir error normalization"
+title = "`CcxtOcx.Error` — canonical error taxonomy + JS adapter mapping"
 scores = { d = 4, b = 7, u = 6 }
 scored_at = "2026-05-16"
 body = """
-Map `%QuickBEAM.JS.Error{name: "BadSymbol"}`, `"NetworkError"`, `"RateLimitExceeded"`, etc. to Elixir tagged tuples (`{:error, :bad_symbol, msg}`). One canonical error module so every downstream wrapper returns the same shape.
+Define the public error contract once, owned by the wrapper, not by any adapter. `CcxtOcx.Error` enumerates the canonical tags (`:bad_symbol`, `:network`, `:rate_limit`, `:auth`, `:insufficient_funds`, `:invalid_order`, `:order_not_found`, `:exchange_not_available`, `:unknown`); every wrapper returns `{:error, tag, %CcxtOcx.Error{...}}` regardless of which adapter handled the call. **JS adapter responsibility:** map CCXT's error class names (`%QuickBEAM.JS.Error{name: "BadSymbol" | "NetworkError" | "RateLimitExceeded" | ...}`) to canonical tags — small stable table, since CCXT's maintainers own the venue-code → CCXT-class mapping upstream. **Native adapters (Phase 7) responsibility:** carry their own full venue-code → canonical-tag tables; no upstream maintainer doing it for them. Task 5b's bundle-bump pipeline catches new CCXT error classes we haven't mapped (assertion: zero `:unknown` tags in the smoke suite). Task N3's conformance harness catches when CCXT-class drift means the native adapter's venue-code table is stale (see N3). The taxonomy itself is the contract — adapters translate into it; consumers never see adapter-specific shapes.
+
+**Macro-generated JS mapping (refinement):** the CCXT-class → canonical-tag table for the JS adapter can be macro-generated rather than hand-curated. At compile time, walk CCXT's error-class hierarchy — either via OXC parse of `node_modules/ccxt/js/src/base/errors.js`, or via runtime introspection during the same compile-time bundle boot Task 9 already performs — and emit the case statement. Bundle bumps that add a new error class fail compile with "unmapped: NewErrorName", catching drift mechanically rather than via the smoke-suite zero-`:unknown` assertion. Cross-reference Task 5b: the error-class diff joins the unified-method-list and per-exchange `has`-table diff already there.
 """
 
 [[task]]
@@ -222,6 +224,8 @@ scored_at = "2026-05-16"
 depends_on = ["6", "6b"]
 body = """
 Single declaration emits the QuickBEAM call, JSON encode of args, await + decode, struct hydration, and error normalization for one unified method *across the exchanges declared in `use CcxtOcx`*. Emission is gated by Task 6b's scope — never iterate over all 100+ unconditionally. NimbleOptions schema validates the macro options at compile time (per `~/.claude/includes/development-philosophy.md` § "Cite Ecosystem Precedents"). Phoenix.Router and Ash.Resource are the precedents — single declarative line, full generated wrapper.
+
+**Capability-gated emission:** read each exchange's `has` table at compile time (via the same throwaway runtime Task 9 boots — share the cached `priv/exchange_caps/<id>.exs` output) and *only emit* a method on that exchange's module if `ex.has[method] == true`. Result: calling `CcxtOcx.Binance.fetch_some_unsupported_method/2` raises `UndefinedFunctionError` at compile, not a runtime `{:error, :not_supported}`. Tighter contract; tradeoff is that `mix docs` per-exchange diverges and IDE completion reflects the per-venue surface (which is arguably correct, since the surface IS per-venue). Task 9's `has?/1` becomes a runtime introspection helper for user-supplied venue lists, not a routing primitive used by `defunified` itself.
 """
 
 [[task]]
@@ -494,6 +498,8 @@ body = """
 
 (1) **Macro:** `defendpoint :fetch_ticker, "GET /api/v3/ticker/24hr", params: [symbol: :string], returns: Ticker.t(), parse: &parse_ticker/1` emits the Req call, signing dispatch (for private endpoints), response parser invocation, struct hydration into the Phase 2 typed structs, and error normalization. NimbleOptions schema validates the option keyword. The output of one declaration is a complete behaviour-callback implementation.
 
+  **Signing as a declarative option, not a hand-written `sign/1` per venue.** Auth shapes vary across exchanges (HMAC-SHA256 over query, HMAC over body, HMAC over canonical-string, JWT bearer, Ed25519, web3 personal_sign) but the *shape* is declarative: which fields go into the canonical string, where the signature attaches (header / query / body), where the timestamp goes, the nonce strategy. The `:signed` option on `defendpoint` carries that shape — e.g. `signed: [scheme: :hmac_sha256, sign: :query, params: [:timestamp, :recv_window], header: "X-MBX-SIGNATURE"]`. Across N4–N7 that collapses ~30 LOC × 5 venues of repetitive sign-then-attach-header code into one declaration per private endpoint. Precedent: Joken's `Joken.Config` declarative signer config. NimbleOptions schema validates each scheme's required fields; exotic schemes drop to `signed: {:custom, &MyExchange.sign/2}` as an escape hatch. The extractor in (2) emits the right `:signed` option from CCXT's per-exchange `sign()` fn rather than copying its body.
+
 (2) **Extractor:** at compile time, parse `node_modules/ccxt/js/src/<exchange>.js` via OXC to emit the per-exchange `defendpoint` table automatically. CCXT REST adapters are mostly URL templates + parameter maps + a `sign()` fn + per-method `parseX()` fns — all extractable. Output is committed to `priv/native_adapters/<exchange>.exs` so codegen is reproducible without running OXC at compile time. Hand-fixes for genuinely venue-specific quirks layered on top via override hooks.
 
 Without N0, every exchange in N4–N7 reimplements the same boilerplate. With N0, per-exchange porting becomes "extract → review → patch the hard 20%."
@@ -536,6 +542,8 @@ scored_at = "2026-05-16"
 depends_on = ["N1", "N2", "T4"]
 body = """
 *The leverage point — and a hard gate on N4–N7.* For any `(exchange, method)`, run the JS path *and* the native path against the same input in parallel; assert struct equality after normalization. Plus T4's byte-equal signing comparison for private methods. Before any method flips to `:native` in production, conformance must agree across N runs on testnet *and* mainnet read-only. ExUnit + property-based generators for the input space. Land N3 *before* N4 — without it, "the native port works" is unfalsifiable.
+
+**Declarative pair specs via `defconformance`.** Each `(exchange, method)` pair needs sample args, ignored fields (timestamps, request IDs, latency-dependent diffs), and per-field tolerance (decimal rounding, list ordering when the spec doesn't pin it). Hand-rolling that as ~10 methods × 5 venues = 50 test bodies recreates the boilerplate Phase 2's macros exist to kill. Instead: `defconformance :fetch_ticker, exchange: :binance, args: [symbol: "BTC/USDT"], ignore: [:timestamp, :info], tolerance: %{vwap: 0.0001}` generates the parallel-call test, the normalization step, the struct diff, and the property-based input generator from the param schema in N0. NimbleOptions schema validates the declaration; the macro expands into a standard ExUnit `test` block so failures point at the declaration site. Bypass via a hand-written `test` when a pair needs genuinely bespoke setup (e.g. websocket warm-up before the JS path is queryable).
 """
 
 [[task]]

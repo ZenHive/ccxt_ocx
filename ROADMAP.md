@@ -21,7 +21,7 @@
 **Phase 1: Foundation — runtime lifecycle and supervision.** `CcxtOcx.Runtime` lands the basic single-runtime handle with the ccxt bundle pre-loaded. Next: pool it (Task 3), normalize JS errors (Task 4), and smoke-test the full data plane (Task 5).
 
 <!-- FOCUS:BEGIN -->
-**Focus phase:** 1 — Foundation — Runtime Lifecycle (4 of 7 done · 0 in progress)
+**Focus phase:** 1 — Foundation — Runtime Lifecycle (4 of 7 done · 1 in progress)
 
 **Last shipped:** no recent shipments
 
@@ -39,7 +39,7 @@
 |------|--------|-------|
 | Task 1 | ✅ | 🎁 **foundation** · `CcxtOcx.Runtime` module [D:4/B:9/U:9 → Eff:2.25] 🎯 |
 | Task 2 | ✅ | 🎁 **foundation** · Pin `quickbeam ~> 0.10.4` and document why [D:1/B:5/U:6 → Eff:5.5] 🎯 |
-| Task 3 | ⬜ | 🎁 **foundation** · `CcxtOcx.RuntimePool` supervisor [D:5/B:8/U:7 → Eff:1.5] 🚀 |
+| Task 3 | 🔄 | 🎁 **foundation** · `CcxtOcx.RuntimePool` supervisor [D:5/B:8/U:7 → Eff:1.5] 🚀 |
 | Task 4 | ⬜ | 🎁 **foundation** · `CcxtOcx.Error` — canonical error taxonomy + JS adapter mapping [D:4/B:7/U:6 → Eff:1.62] 🚀 |
 | Task 5 | ✅ | 🎁 **foundation** · Smoke test suite [D:3/B:6/U:5 → Eff:1.83] 🚀 |
 | Task 5b | ⬜ | 🎁 **foundation** · Bundle-bump verification pipeline [D:5/B:8/U:8 → Eff:1.6] 🚀 |

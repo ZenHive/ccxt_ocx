@@ -1,0 +1,3 @@
+[mcp_servers.tidewave]
+url = "http://localhost:4014/tidewave/mcp"
+http_headers = { "Accept-Encoding" = "identity" }

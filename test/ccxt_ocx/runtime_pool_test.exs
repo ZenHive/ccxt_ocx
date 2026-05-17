@@ -55,6 +55,25 @@ defmodule CcxtOcx.RuntimePoolTest do
 
       assert msg =~ bogus
     end
+
+    test "start_link/1 rejects invalid :size at the API boundary" do
+      Process.flag(:trap_exit, true)
+      assert {:error, {:invalid_size, 0}} = CcxtOcx.RuntimePool.start_link(size: 0)
+      assert {:error, {:invalid_size, -1}} = CcxtOcx.RuntimePool.start_link(size: -1)
+      assert {:error, {:invalid_size, "4"}} = CcxtOcx.RuntimePool.start_link(size: "4")
+      assert {:error, {:invalid_size, nil}} = CcxtOcx.RuntimePool.start_link(size: nil)
+    end
+
+    test "wrapper stops with :pool_died when NimblePool dies" do
+      Process.flag(:trap_exit, true)
+      {:ok, pool} = CcxtOcx.RuntimePool.start_link(size: 1)
+      np = :sys.get_state(pool).np
+      ref = Process.monitor(pool)
+
+      Process.exit(np, :kill)
+
+      assert_receive {:DOWN, ^ref, :process, ^pool, {:pool_died, :killed}}, 5_000
+    end
   end
 
   describe "run/3" do
@@ -93,6 +112,17 @@ defmodule CcxtOcx.RuntimePoolTest do
       assert_raise RuntimeError, "boom", fn ->
         CcxtOcx.RuntimePool.run(pool, fn _rt -> raise "boom" end)
       end
+    end
+
+    test "non-NimblePool exit reasons from the callback propagate (not misclassified)", %{
+      shared: pool
+    } do
+      # User callback exits with a `{:timeout, _}`-shaped reason that isn't
+      # NimblePool's checkout timeout — the catch must NOT rewrite it to
+      # `:checkout_timeout`. Same outer shape, different inner MFA.
+      reason = {:timeout, {SomethingElse, :call, []}}
+
+      assert catch_exit(CcxtOcx.RuntimePool.run(pool, fn _rt -> exit(reason) end)) == reason
     end
 
     test "returns :checkout_timeout when pool is exhausted" do

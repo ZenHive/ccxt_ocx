@@ -87,7 +87,16 @@ defmodule CcxtOcx.RuntimePool do
 
   @doc "Stop the pool. Cascades worker termination via NimblePool."
   @spec stop(pool()) :: :ok
-  def stop(pool), do: GenServer.stop(pool, :normal, @default_stop_timeout)
+  def stop(pool) do
+    GenServer.stop(pool, :normal, @default_stop_timeout)
+  catch
+    :exit, reason ->
+      if expected_stop_exit?(reason, pool) do
+        :ok
+      else
+        exit(reason)
+      end
+  end
 
   @doc """
   Check out a worker, run `fun.(rt)` against its raw QuickBEAM handle,
@@ -99,7 +108,7 @@ defmodule CcxtOcx.RuntimePool do
   @spec run(pool(), run_fun(result), timeout()) :: result | {:error, :checkout_timeout}
         when result: term()
   def run(pool, fun, timeout \\ @default_checkout_timeout) when is_function(fun, 1) do
-    np = GenServer.call(pool, :np)
+    np = GenServer.call(pool, :np, timeout)
 
     NimblePool.checkout!(
       np,
@@ -110,7 +119,8 @@ defmodule CcxtOcx.RuntimePool do
       timeout
     )
   catch
-    :exit, {:timeout, _} -> {:error, :checkout_timeout}
+    :exit, {:timeout, {NimblePool, :checkout, _}} -> {:error, :checkout_timeout}
+    :exit, {:timeout, {GenServer, :call, [_, :np, _]}} -> {:error, :checkout_timeout}
   end
 
   @doc "Return diagnostics about the pool."
@@ -122,18 +132,25 @@ defmodule CcxtOcx.RuntimePool do
   @impl GenServer
   @spec init(keyword()) :: {:ok, map()} | {:stop, term()}
   def init(opts) do
-    size = Keyword.get(opts, :size) || System.schedulers_online()
+    size = Keyword.get(opts, :size, System.schedulers_online())
     runtime_opts = Keyword.get(opts, :runtime_opts, [])
 
-    # Trap exits during probe so a failing CcxtOcx.Runtime.start_link surfaces
-    # as a structured init error instead of cascading through the link and
-    # killing this process before the `with` else-clause can wrap the reason.
-    Process.flag(:trap_exit, true)
-    probe_result = probe_runtime(runtime_opts)
-    Process.flag(:trap_exit, false)
-    flush_exits()
+    if is_integer(size) and size > 0 do
+      do_init(size, runtime_opts)
+    else
+      {:stop, {:invalid_size, size}}
+    end
+  end
 
-    with {:ok, %{ccxt_version: version, exchange_count: count}} <- probe_result,
+  @spec do_init(pos_integer(), keyword()) :: {:ok, map()} | {:stop, term()}
+  defp do_init(size, runtime_opts) do
+    # Trap exits permanently so:
+    # - probe failures surface as structured init errors (no link cascade)
+    # - supervisor `:shutdown` reaches `terminate/2` (so we can stop NimblePool cleanly)
+    # - NimblePool death is observable in `handle_info/2`, not silent
+    Process.flag(:trap_exit, true)
+
+    with {:ok, %{ccxt_version: version, exchange_count: count}} <- probe_runtime(runtime_opts),
          {:ok, np} <-
            NimblePool.start_link(
              worker: {Worker, %{runtime_opts: runtime_opts}},
@@ -155,15 +172,6 @@ defmodule CcxtOcx.RuntimePool do
     end
   end
 
-  @spec flush_exits() :: :ok
-  defp flush_exits do
-    receive do
-      {:EXIT, _pid, _reason} -> flush_exits()
-    after
-      0 -> :ok
-    end
-  end
-
   @impl GenServer
   @spec handle_call(:np | :info, GenServer.from(), map()) ::
           {:reply, pid() | info(), map()}
@@ -181,7 +189,25 @@ defmodule CcxtOcx.RuntimePool do
   end
 
   @impl GenServer
-  @spec handle_info(term(), map()) :: {:noreply, map()}
+  @spec handle_info(term(), map()) :: {:noreply, map()} | {:stop, term(), map()}
+  def handle_info({:EXIT, np, reason}, %{np: np} = state) do
+    # NimblePool died — can't keep serving. Supervisor restarts us, we
+    # rebuild a fresh pool.
+    {:stop, {:pool_died, reason}, state}
+  end
+
+  def handle_info({:EXIT, _from, :normal}, state) do
+    # Stale probe-runtime exit (probe is stopped normally during init) or
+    # any other linked normal exit — harmless, keep serving.
+    {:noreply, state}
+  end
+
+  def handle_info({:EXIT, _from, reason}, state) do
+    # Parent supervisor sent :shutdown (or another non-normal link exit).
+    # Propagate so `terminate/2` runs and NimblePool gets cleanly stopped.
+    {:stop, reason, state}
+  end
+
   def handle_info(_msg, state), do: {:noreply, state}
 
   @impl GenServer
@@ -203,6 +229,31 @@ defmodule CcxtOcx.RuntimePool do
   def terminate(_reason, _state), do: :ok
 
   ## Helpers
+
+  @spec expected_stop_exit?(term(), pool()) :: boolean()
+  defp expected_stop_exit?({:noproc, {GenServer, :stop, [pool, :normal, @default_stop_timeout]}}, pool) do
+    true
+  end
+
+  defp expected_stop_exit?(
+         {{reason, {:sys, :terminate, [pool, :normal, @default_stop_timeout]}},
+          {GenServer, :stop, [pool, :normal, @default_stop_timeout]}},
+         pool
+       ) do
+    expected_shutdown_reason?(reason)
+  end
+
+  defp expected_stop_exit?({reason, {GenServer, :stop, [pool, :normal, @default_stop_timeout]}}, pool) do
+    expected_shutdown_reason?(reason)
+  end
+
+  defp expected_stop_exit?(_reason, _pool), do: false
+
+  @spec expected_shutdown_reason?(term()) :: boolean()
+  defp expected_shutdown_reason?(:normal), do: true
+  defp expected_shutdown_reason?(:shutdown), do: true
+  defp expected_shutdown_reason?({:shutdown, _reason}), do: true
+  defp expected_shutdown_reason?(_reason), do: false
 
   # Boots one runtime synchronously to surface structured init errors
   # (e.g. `{:bundle_missing, _}`) before NimblePool spawns its workers.

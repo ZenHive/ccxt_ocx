@@ -122,7 +122,7 @@
       "id": "3",
       "phase": 1,
       "bundle": "foundation",
-      "status": "pending",
+      "status": "in_progress",
       "title": "`CcxtOcx.RuntimePool` supervisor",
       "scores": {
         "d": 5,

@@ -9,7 +9,7 @@
     "1": {
       "name": "Foundation — Runtime Lifecycle",
       "order": 1,
-      "status": "pending"
+      "status": "done"
     },
     "2": {
       "name": "Macro-Driven Method Generation",

@@ -10,7 +10,7 @@ phase = 1
 [phases.1]
 name = "Foundation — Runtime Lifecycle"
 order = 1
-status = "pending"
+status = "done"
 
 [phases.2]
 name = "Macro-Driven Method Generation"

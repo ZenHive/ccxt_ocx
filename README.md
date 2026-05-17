@@ -5,8 +5,10 @@ that runs the JavaScript bundle inside [QuickBEAM](https://github.com/elixir-vol
 — no Node.js. Per-exchange/per-method wrappers (REST + WS, public + private)
 are generated at compile time from CCXT's own type definitions.
 
-> **Status: Phase 1.** Currently the project ships only `CcxtOcx.Runtime`,
-> the foundation handle every later phase sits on. See
+> **Status: Phase 1 complete.** The project ships `CcxtOcx.Runtime`,
+> `CcxtOcx.RuntimePool`, `CcxtOcx.Error`, `CcxtOcx.Tiers`,
+> `CcxtOcx.BundleSurface` (+ `mix ccxt.verify_bundle`), and
+> `CcxtOcx.Telemetry` — the foundation every later phase sits on. See
 > [ROADMAP.md](ROADMAP.md) for what's next.
 
 ## Smoke test

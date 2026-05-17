@@ -18,7 +18,7 @@
 
 ## 🎯 Current Focus
 
-**Phase 1: Foundation — runtime lifecycle and supervision.** `CcxtOcx.Runtime` lands the basic single-runtime handle with the ccxt bundle pre-loaded. Next: pool it (Task 3), normalize JS errors (Task 4), and smoke-test the full data plane (Task 5).
+**Phase 1 complete.** The runtime lifecycle + supervision foundation is in place: `CcxtOcx.Runtime`, `RuntimePool`, `Error`, `Tiers`, `BundleSurface` (+ `mix ccxt.verify_bundle`), and `Telemetry` (Task 14, the first Phase 5 deliverable shipped in lockstep). Phase 2 (macro-driven method generation) is next; see the focus line below.
 
 <!-- FOCUS:BEGIN -->
 **Focus phase:** 1 — Foundation — Runtime Lifecycle (7 of 7 done · 0 in progress)
@@ -35,15 +35,7 @@
 > Without this, every other phase is blocked. Goal: a supervised QuickBEAM runtime that loads ccxt once, exposes a stable handle, and survives transient JS errors.
 
 <!-- TASKS:BEGIN phase=1 -->
-| Task | Status | Notes |
-|------|--------|-------|
-| Task 1 | ✅ | 🎁 **foundation** · `CcxtOcx.Runtime` module [D:4/B:9/U:9 → Eff:2.25] 🎯 |
-| Task 2 | ✅ | 🎁 **foundation** · Pin `quickbeam ~> 0.10.4` and document why [D:1/B:5/U:6 → Eff:5.5] 🎯 |
-| Task 3 | ✅ | 🎁 **foundation** · `CcxtOcx.RuntimePool` supervisor [D:5/B:8/U:7 → Eff:1.5] 🚀 |
-| Task 4 | ✅ | 🎁 **foundation** · `CcxtOcx.Error` — canonical error taxonomy + JS adapter mapping [D:4/B:7/U:6 → Eff:1.62] 🚀 |
-| Task 5 | ✅ | 🎁 **foundation** · Smoke test suite [D:3/B:6/U:5 → Eff:1.83] 🚀 |
-| Task 5b | ✅ | 🎁 **foundation** · Bundle-bump verification pipeline [D:5/B:8/U:8 → Eff:1.6] 🚀 |
-| Task 5c | ✅ | 🎁 **foundation** · `CcxtOcx.Tiers` — priority-tier classification [D:4/B:7/U:8 → Eff:1.88] 🚀 |
+> 7 tasks. See [CHANGELOG.md](CHANGELOG.md#phase-1-foundation-runtime-lifecycle).
 <!-- TASKS:END -->
 
 ---

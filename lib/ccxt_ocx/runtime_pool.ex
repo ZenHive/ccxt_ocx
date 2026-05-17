@@ -41,9 +41,11 @@ defmodule CcxtOcx.RuntimePool do
 
   ## Telemetry
 
-  `memory/1` emits `[:ccxt_ocx, :runtime, :memory]` with `%{pool: name}` in
-  the metadata (sampling one worker). See `CcxtOcx.Telemetry` for the event
-  contract and handler patterns.
+  `memory/1` emits `[:ccxt_ocx, :runtime, :memory]` with the caller's pool
+  reference in the `pool` metadata key (an atom, pid, or `{:via, ...}` tuple,
+  per `t:pool/0`). The event samples one worker — workers are homogeneous,
+  so a single sample is representative. See `CcxtOcx.Telemetry` for the full
+  event contract and handler patterns.
   """
 
   use GenServer

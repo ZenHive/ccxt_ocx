@@ -63,6 +63,27 @@ defmodule CcxtOcx.BundleSurfaceTest do
       assert "withdraw" in methods, "expected trade-plane allowlist entry"
     end
 
+    test "unified_methods/0 excludes CCXT base-class internal helpers" do
+      methods = BundleSurface.unified_methods()
+
+      denied = ~w(
+        fetch2
+        fetchPaginatedCallCursor
+        fetchPaginatedCallDeterministic
+        fetchPaginatedCallDynamic
+        fetchPaginatedCallIncremental
+        fetchPartialBalance
+        fetchWebEndpoint
+        createSafeDictionary
+        loadMarketsHelper
+      )
+
+      for name <- denied do
+        refute name in methods,
+               "expected #{name} to be filtered out by @additional_denied in Compile.public_unified_method?/1"
+      end
+    end
+
     test "sampled_has/0 returns the committed has-table map" do
       tables = BundleSurface.sampled_has()
       assert is_map(tables)

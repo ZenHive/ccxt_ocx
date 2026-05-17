@@ -32,7 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The public API is generated at compile time from CCXT's type definitions — **never hand-written**. CCXT's surface is ~100 exchanges × ~50 unified methods × (REST + WS) × (public + private); hand-written per-method wrappers don't scale. The macro layer is the contract; the adapter behind it (JS via QuickBEAM, or native Elixir for the venues that matter) is an implementation detail.
 
-**Planned macro surface** (none implemented yet — Task 1 `CcxtOcx.Runtime` is the only landed Phase 2 piece; status per macro in [ROADMAP.md](ROADMAP.md)):
+**Planned macro surface** (no macros implemented yet — Phase 1 foundation modules (`Runtime`, `RuntimePool`, `Error`, `Tiers`, `BundleSurface`, `Telemetry`) are in place; status per macro in [ROADMAP.md](ROADMAP.md)):
 
 | Macro | Phase | Role |
 |---|---|---|

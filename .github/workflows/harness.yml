@@ -16,8 +16,11 @@
 #                          money / wire-format) work should layer a per-module
 #                          95% ratchet as a separate job, not raise this global
 #                          floor.
-#   4. Integration tag    — `integration` (no tagged tests yet; exclude is
-#                          a no-op until they exist).
+#   4. Integration tag    — `integration` (used by bundle/OXC tests that
+#                          need the on-disk CCXT bundle; CI includes them
+#                          because `mix npm.ci` provisions the bundle. The
+#                          local default test run excludes them — see
+#                          `test/test_helper.exs`).
 
 name: Harness
 

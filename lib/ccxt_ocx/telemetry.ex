@@ -34,9 +34,20 @@ defmodule CcxtOcx.Telemetry do
   ### Runtime (implemented in Task 14)
 
       [:ccxt_ocx, :runtime, :memory]
+      [:ccxt_ocx, :runtime, :start]   # reserved for runtime lifecycle (Task 15)
+      [:ccxt_ocx, :runtime, :stop]    # reserved for runtime lifecycle (Task 15)
 
-  On-demand (and baseline) snapshot of QuickJS memory usage for a given runtime.
-  See `CcxtOcx.Runtime.memory/1` (raw numbers also available from `memory_usage/1`).
+  `:memory` is emitted on-demand by `CcxtOcx.Runtime.memory/1` and
+  `CcxtOcx.RuntimePool.memory/1`, plus once at the end of `Runtime.init/1`
+  (baseline) and once in `Runtime.terminate/2` (final, best-effort).
+
+  Metadata shape for `:memory`:
+
+  - `%{server: pid()}` — explicit `Runtime.memory/1` call
+  - `%{server: pid(), phase: :init | :terminate}` — lifecycle emit
+  - `%{pool: pool_ref}` — `RuntimePool.memory/1` (pool_ref per `t:CcxtOcx.RuntimePool.pool/0`)
+
+  Raw numbers are also available from `CcxtOcx.Runtime.memory_usage/1` (no event).
 
   ## Usage
 
@@ -126,17 +137,24 @@ defmodule CcxtOcx.Telemetry do
   # ------------------------------------------------------------------
 
   @doc false
+  @spec __rest_start__() :: [:ccxt_ocx | :rest | :start, ...]
   def __rest_start__, do: @rest_start
   @doc false
+  @spec __rest_stop__() :: [:ccxt_ocx | :rest | :stop, ...]
   def __rest_stop__, do: @rest_stop
   @doc false
+  @spec __rest_exception__() :: [:ccxt_ocx | :rest | :exception, ...]
   def __rest_exception__, do: @rest_exception
   @doc false
+  @spec __ws_tick__() :: [:ccxt_ocx | :ws | :tick, ...]
   def __ws_tick__, do: @ws_tick
   @doc false
+  @spec __runtime_memory__() :: [:ccxt_ocx | :runtime | :memory, ...]
   def __runtime_memory__, do: @runtime_memory
   @doc false
+  @spec __runtime_start__() :: [:ccxt_ocx | :runtime | :start, ...]
   def __runtime_start__, do: @runtime_start
   @doc false
+  @spec __runtime_stop__() :: [:ccxt_ocx | :runtime | :stop, ...]
   def __runtime_stop__, do: @runtime_stop
 end

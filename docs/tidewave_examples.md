@@ -149,6 +149,62 @@ CcxtOcx.Runtime.memory_usage(:rt)    # same map, no telemetry side-effect
 end, %{})
 ```
 
+## Dev Telemetry Loop (Dogfooding)
+
+`CcxtOcx.DevTelemetry` is the maintainer-side companion to `CcxtOcx.Telemetry`: one
+call attaches a handler to every `[:ccxt_ocx, ...]` event family, pretty-prints each
+emission to stdout, and keeps running counts + last-values in an `Agent` you can
+`summary/0` at any time. Use it as the validation loop for new emission sites
+(Task 7 `defunified`, Task 11 `defstreaming`, Task 15 memory monitor) before
+downstream consumers (`CcxtOcx.PromEx.Plugin`, Grafana dashboards) bake in
+assumptions about the contract.
+
+```elixir
+# Attach once per session — idempotent (re-attach detaches the prior handler
+# and resets counts).
+CcxtOcx.DevTelemetry.watch()
+
+# Drive load. Every emission lands as a one-line print + an Agent bump.
+{:ok, _} = CcxtOcx.Runtime.start_link(name: :rt)
+CcxtOcx.Runtime.memory(:rt)
+# => [memory] malloc=12.3M used=8.1M objs=14523 server=#PID<0.345.0> phase=manual
+
+# Snapshot when you want to assert the shape.
+CcxtOcx.DevTelemetry.summary()
+# => %{
+#      runtime_memory: %{count: 2, last_measurements: %{...}, last_metadata: %{...}},
+#      rest_start: %{count: 0, last_measurements: nil, last_metadata: nil},
+#      rest_stop: %{count: 0, last_measurements: nil, last_metadata: nil},
+#      rest_exception: %{count: 0, last_measurements: nil, last_metadata: nil},
+#      ws_tick: %{count: 0, last_measurements: nil, last_metadata: nil}
+#    }
+
+# Clear counters without re-attaching.
+CcxtOcx.DevTelemetry.reset()
+
+# Detach when you're done.
+CcxtOcx.DevTelemetry.detach()
+```
+
+`watch/1` takes a few options for ad-hoc filtering:
+
+```elixir
+# Silence pretty-print, keep counters only (handy when driving high-frequency
+# WS load and the prints would scroll past too fast to read).
+CcxtOcx.DevTelemetry.watch(print: false)
+
+# Restrict to a subset of event families.
+CcxtOcx.DevTelemetry.watch(filter: [:runtime_memory, :ws_tick])
+
+# Send pretty-print to a different IO device (e.g. a log file).
+{:ok, log} = File.open("/tmp/ccxt_ocx.log", [:write])
+CcxtOcx.DevTelemetry.watch(io_device: log)
+```
+
+In dev, `iex -S mix` (and therefore `iex -S mix tidewave`) auto-attaches
+`DevTelemetry` via the project's `.iex.exs`, so you can drop straight into
+`summary/0` without a manual `watch/0` call.
+
 ## Using Other Tidewave Tools Together
 
 While you have a runtime running, combine it with Tidewave's other MCP tools:

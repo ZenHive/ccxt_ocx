@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "project": "ccxt_ocx",
   "default_branch": "development",
   "focus": {
@@ -79,6 +79,22 @@
       "description": "Testnet harnesses + signed-payload byte-comparison for the trade plane"
     }
   },
+  "milestones": {
+    "v0_1": {
+      "name": "v0.1 — first usable (data plane)",
+      "description": "Macro-generated read-only data plane on Tier-1 venues end-to-end. Library is callable from IEx for fetchTicker/fetchOrderBook/fetchOHLCV via typed wrappers.",
+      "order": 1,
+      "status": "active",
+      "target_version": "0.1.0"
+    },
+    "v1_0": {
+      "name": "v1.0 — production-ready trade plane (orders + WS auth streams)",
+      "description": "Full unified CCXT surface incl. signed trade plane verified against Binance USDT-M futures + Deribit options testnets, with auth WS streams (watchBalance/watchOrders/watchMyTrades), reconnect/heartbeat policy, rate-limit + nonce hoisted into Elixir, and memory/restart safety. OKX explicitly out of scope for v1.0.",
+      "order": 2,
+      "status": "pending",
+      "target_version": "1.0.0"
+    }
+  },
   "task": [
     {
       "id": "1",
@@ -97,6 +113,7 @@
       "shipped_in": "see CHANGELOG.md",
       "body": "Implemented as `lib/ccxt_ocx/runtime.ex` — GenServer owning one QuickBEAM runtime with browser stubs (`self`/`window`/`navigator`/`location`) and the ccxt browser bundle pre-loaded. `eval/3`, `call/4`, `with_runtime/2`, `info/1` helpers fetch the raw rt once and dispatch directly (no double GenServer hop). Caller-crash isolation verified by test. See CHANGELOG.md#unreleased.\n",
       "scored_at": "2026-05-16",
+      "implemented": "As specified in body — `lib/ccxt_ocx/runtime.ex` GenServer with browser stubs + pre-loaded CCXT bundle; direct-dispatch helpers shipped; caller-crash isolation test green.",
       "cross_repo": []
     },
     {
@@ -116,6 +133,7 @@
       "shipped_in": "see CHANGELOG.md",
       "body": "`mix.exs` floor lifted to `~> 0.10.4`; rationale recorded in CLAUDE.md \"Why these dependency floors\" section.\n",
       "scored_at": "2026-05-16",
+      "implemented": "As specified in body — floor at `~> 0.10.4` (since bumped to 0.10.12 floor as documented in CLAUDE.md § 'Dependency notes').",
       "cross_repo": []
     },
     {
@@ -140,6 +158,7 @@
       ],
       "body": "Build the supervised runtime pooling layer from observed QuickBEAM behavior, not assumption. Tidewave confirmed `QuickBEAM.Pool.run/3` resets and re-runs `:init` after each checkout; because the CCXT browser bundle is ~5.4 MB, first benchmark whether that reset cost is acceptable for ccxt workloads. If it is acceptable, wrap `QuickBEAM.Pool` behind `CcxtOcx.RuntimePool`. If it is not, implement a long-lived pool of `CcxtOcx.Runtime` workers that keeps CCXT loaded across calls. The public pool API should hide which strategy is chosen and should support sizing per `(exchange, market_type)`.\n",
       "scored_at": "2026-05-16",
+      "implemented": "Long-lived pool strategy chosen after benchmarking confirmed `QuickBEAM.Pool.run/3` reset cost was unacceptable (~5.4MB CCXT bundle re-eval per checkout). `CcxtOcx.RuntimePool` keeps CCXT loaded across calls, supervised under the application, sizable per `(exchange, market_type)`. Worker crash/restart and concurrent-checkout behavior covered by tests.",
       "cross_repo": []
     },
     {
@@ -158,6 +177,7 @@
       "depends_on": [],
       "body": "Define the public error contract once. Delivered: closed 9-tag taxonomy (`:bad_symbol | :network | :rate_limit | :auth | :not_found | :permission | :exchange | :timeout | :unknown`), `%CcxtOcx.Error{}` struct with `:source` / `:source_name` discriminator (future-proofs Phase 7 native adapters), three-function API (`tag_for_ccxt_class/1` pure, `from_js_error/2`, `normalize/2` with `[:exchange, :method, :original, :meta]` opts for context injection), and a compile-time drift gate using `@external_resource \"ccxt/js/src/base/errors.d.ts\"` + exhaustive check of exported CCXT error classes.\n\nJS path (QuickBEAM): raw `%{name: \"BadSymbol\", ...}` or `%QuickBEAM.JSError{}` → normalized struct with `source: :js`, `source_name: \"BadSymbol\"`. Wrappers call `normalize(raw, exchange: :binance, method: \"createOrder\")`.\n\nNative adapters (Phase 7): will supply `source: :binance`, `source_name: venue_code`. Consumers match on `:tag`; provenance lives in the two discriminator fields.\n\nThe gate fails compilation when a new CCXT subclass appears in the .d.ts and lacks a mapping. Real QuickBEAM tests exercise actual CCXT error constructors (BadSymbol, RateLimitExceeded, AuthenticationError, ...).\n",
       "scored_at": "2026-05-16",
+      "implemented": "As specified in body — 9-tag closed taxonomy, `%CcxtOcx.Error{}` struct with `source`/`source_name` discriminator, three-function API (`tag_for_ccxt_class/1`, `from_js_error/2`, `normalize/2`), compile-time drift gate via `@external_resource`. Live CCXT error constructors exercised in tests.",
       "cross_repo": []
     },
     {
@@ -176,6 +196,7 @@
       "depends_on": [],
       "body": "ExUnit tag `:integration` (off by default), tagged `:network` for tests that hit Binance. Repeat the live verification done in tidewave: bundle loads, OXC parses, ticker/orderbook/OHLCV/trades arrive, WS streams 3 ticker pushes. Use `flunk/1` with actionable messages on missing-network — never skip silently.\n",
       "scored_at": "2026-05-16",
+      "implemented": "As specified in body — `:integration` + `:network` tagged ExUnit smoke suite covering bundle load, OXC parse, ticker/orderbook/OHLCV/trades, and 3-tick WS verification. `flunk/1` with actionable messages on missing-network (never silent skip).",
       "cross_repo": []
     },
     {
@@ -194,6 +215,7 @@
       "depends_on": [],
       "body": "CCXT releases multiple times per week. A `mix npm.update ccxt` must not silently regress codegen. Bake a `mix ccxt.verify_bundle` task that: re-parses `node_modules/ccxt/js/ccxt.d.ts` via OXC, diffs the unified-method list and the per-exchange `has` table against a checked-in manifest (`priv/ccxt_surface.exs`), and re-runs the testnet harnesses (T1–T3) before the bump can be merged. Manifest drift = explicit human review, not silent acceptance. Run on every PR that touches `node_modules/ccxt/` or `package.json`.\n",
       "scored_at": "2026-05-16",
+      "implemented": "As specified in body — `mix ccxt.verify_bundle` task implemented; OXC-driven re-parse + manifest diff vs `priv/ccxt_surface.exs`. Testnet harness invocation deferred to land alongside T1–T3 themselves (verify_bundle infrastructure ready when those exist).",
       "cross_repo": []
     },
     {
@@ -213,12 +235,14 @@
       "shipped_in": "e5609ae (PR #1)",
       "body": "Mirror ccxt_extract's tier concept locally — no cross-project coupling, since ccxt_ocx ships to hex and can't path-dep on a sibling. Same four buckets (`:tier1`, `:tier2`, `:tier3`, `:dex`) with the same hand-curated roots (tier1: binance, bybit, okx, deribit, coinbaseexchange; tier2: kraken, kucoin, gate, htx, bitmex, bitfinex; etc.) committed to `priv/priority_tiers.json`. Variant/alias inheritance (binance → binanceus/binancecoinm/binanceusdm; okx → okxus/myokx; htx → huobi) derived at compile time from the **loaded CCXT bundle's class hierarchy** — read `Object.getPrototypeOf` chains via QuickBEAM, no `priv/discoveries/` dependency. Public API mirrors ccxt_extract: `tier1_members/0`, `members_for_tier/1`, `get_priority_tier/1`, `tier1?/1`, `collect_tier_exchanges/1`. Used downstream by: Phase 3 WS verification spread, Phase 4 testnet harnesses (`mix ccxt_ocx.testnet --tier1`), Phase 5 rate-limit pinning priority, Phase 7 native-port scoping (N4–N7 = \"Tier 1 venues\"). **Drift policy:** ccxt_extract's `priority_tiers.json` is the inspiration but not the contract — when curation changes there, manually port relevant changes here. Document the divergence risk in the moduledoc.\n",
       "scored_at": "2026-05-16",
+      "implemented": "Shipped in e5609ae (PR #1). `priv/priority_tiers.json` + `CcxtOcx.Tiers` with the public API specified (tier1_members/0, members_for_tier/1, get_priority_tier/1, tier1?/1, collect_tier_exchanges/1). Compile-time variant/alias inheritance from CCXT bundle's class hierarchy via QuickBEAM `Object.getPrototypeOf` walk.",
       "cross_repo": []
     },
     {
       "id": "6",
       "phase": 2,
       "bundle": "macros",
+      "milestone": "v0_1",
       "status": "pending",
       "title": "Discover and parse CCXT declaration sources with OXC",
       "scores": {
@@ -243,6 +267,7 @@
       "id": "6b",
       "phase": 2,
       "bundle": "macros",
+      "milestone": "v0_1",
       "status": "pending",
       "title": "`use CcxtOcx` — exchange-scope entrypoint",
       "scores": {
@@ -261,6 +286,7 @@
       "id": "7",
       "phase": 2,
       "bundle": "macros",
+      "milestone": "v0_1",
       "status": "pending",
       "title": "`defunified` macro",
       "scores": {
@@ -283,6 +309,7 @@
       "id": "8",
       "phase": 2,
       "bundle": "macros",
+      "milestone": "v0_1",
       "status": "pending",
       "title": "Typed structs for unified return shapes (with declarative field mapping)",
       "scores": {
@@ -318,6 +345,7 @@
       "id": "9",
       "phase": 2,
       "bundle": "macros",
+      "milestone": "v0_1",
       "status": "pending",
       "title": "`defexchange` macro",
       "scores": {
@@ -356,6 +384,7 @@
       "id": "11",
       "phase": 3,
       "bundle": "streaming",
+      "milestone": "v1_0",
       "status": "pending",
       "title": "`defstreaming` macro",
       "scores": {
@@ -376,6 +405,7 @@
       "id": "12",
       "phase": 3,
       "bundle": "streaming",
+      "milestone": "v1_0",
       "status": "pending",
       "title": "`CcxtOcx.Stream` GenStage producer",
       "scores": {
@@ -396,6 +426,7 @@
       "id": "13",
       "phase": 3,
       "bundle": "streaming",
+      "milestone": "v1_0",
       "status": "pending",
       "title": "Reconnect / heartbeat policy",
       "scores": {
@@ -414,6 +445,7 @@
       "id": "T1",
       "phase": 4,
       "bundle": "trade-verify",
+      "milestone": "v1_0",
       "status": "pending",
       "title": "Testnet harness — Binance USDT-M futures",
       "scores": {
@@ -434,6 +466,7 @@
       "id": "T2",
       "phase": 4,
       "bundle": "trade-verify",
+      "milestone": "v1_0",
       "status": "pending",
       "title": "Testnet harness — Deribit options",
       "scores": {
@@ -470,6 +503,7 @@
       "id": "T4",
       "phase": 4,
       "bundle": "trade-verify",
+      "milestone": "v1_0",
       "status": "pending",
       "title": "Signed-payload byte-comparison harness",
       "scores": {
@@ -488,6 +522,7 @@
       "id": "T5",
       "phase": 4,
       "bundle": "trade-verify",
+      "milestone": "v1_0",
       "status": "pending",
       "title": "WS authenticated streams (`watchBalance`, `watchMyTrades`, `watchOrders`)",
       "scores": {
@@ -506,6 +541,7 @@
       "id": "T6",
       "phase": 4,
       "bundle": "trade-verify",
+      "milestone": "v1_0",
       "status": "pending",
       "title": "Document the actual stability surface",
       "scores": {
@@ -544,12 +580,14 @@
       "started_at": "2026-05-17",
       "done_at": "2026-05-17",
       "scored_at": "2026-05-16",
+      "implemented": "As specified in body — `:telemetry` events shipped: `[:ccxt_ocx, :rest, :start|:stop|:exception]`, `[:ccxt_ocx, :ws, :tick]`, `[:ccxt_ocx, :runtime, :memory]`. Validated live via Tidewave against Deribit option-chain surfaces.",
       "cross_repo": []
     },
     {
       "id": "15",
       "phase": 5,
       "bundle": "production",
+      "milestone": "v1_0",
       "status": "pending",
       "title": "Memory monitoring + restart policy",
       "scores": {
@@ -586,6 +624,7 @@
       "id": "16b",
       "phase": 5,
       "bundle": "production",
+      "milestone": "v1_0",
       "status": "pending",
       "title": "Hoist rate-limit + nonce state into Elixir",
       "scores": {
@@ -711,6 +750,7 @@
       "started_at": "2026-05-17",
       "done_at": "2026-05-17",
       "scored_at": "2026-05-17",
+      "implemented": "As specified in body and ACs — `CcxtOcx.PromEx.Plugin` with `event_metrics/1` + `polling_metrics/1`; runtime-memory metrics live, REST/WS reserved for Phase 2/3; tag normalizers default missing keys to `\"none\"`; `{:prom_ex, optional: true}` in `mix.exs`; coverage ≥80%; README 'Observability — PromEx' section added.",
       "cross_repo": []
     },
     {
@@ -895,6 +935,46 @@
       "depends_on": [],
       "body": "Document the operational tax: every CCXT release ships adapter fixes (new fields, normalized formats, bug fixes for venue API changes). Once on native, those don't propagate. Either pin a CCXT version and accept drift, or subscribe to CCXT's git log and port relevant fixes per release for migrated exchanges. The honest framing is \"native exchanges are now your responsibility to maintain\"; budget engineering time accordingly.\n",
       "scored_at": "2026-05-16",
+      "cross_repo": []
+    },
+    {
+      "id": 22,
+      "phase": 6,
+      "bundle": "dx",
+      "status": "done",
+      "title": "Dev telemetry dogfooding loop (CcxtOcx.DevTelemetry)",
+      "scores": {
+        "d": 2,
+        "b": 5,
+        "u": 8
+      },
+      "eff": 3.25,
+      "markers": [],
+      "depends_on": [
+        "14"
+      ],
+      "acceptance_criteria": [
+        "lib/ccxt_ocx/dev_telemetry.ex exports watch/1, summary/0, reset/0, detach/0",
+        "watch/1 is idempotent — re-call resets state and only one handler stays attached",
+        "watch/1 supports :print, :filter, :io_device options",
+        "summary/0 returns initial all-zeros state when watch/1 was never called (no Agent process)",
+        "reset/0 is a no-op when Agent was never started",
+        "detach/0 is idempotent",
+        "Every event family routes to its own counter bucket (runtime_memory, rest_start/stop/exception, ws_tick)",
+        ".iex.exs auto-attaches in dev with a one-line banner; guarded on Mix.env() == :dev AND Code.ensure_loaded?",
+        "docs/tidewave_examples.md has a 'Dev Telemetry Loop' section showing watch → drive → summary → reset → detach",
+        "Full harness green: format, compile --warnings-as-errors, test.json, credo --strict, dialyzer.json, doctor"
+      ],
+      "out_of_scope": [
+        "Persisting DevTelemetry state across IEx sessions",
+        "Production-mode telemetry (logging handlers, structured-log shipping)",
+        "Supervisor entry — watch/1 starts the Agent lazily; dev tool only"
+      ],
+      "body": "Maintainer-side dogfooding companion to CcxtOcx.Telemetry. One `watch/1` call\nattaches to every [:ccxt_ocx, ...] event family, pretty-prints each emission\nto a configurable IO device, and keeps running counts plus last-seen\nmeasurements/metadata in an Agent. `summary/0` dumps state on demand;\n`reset/0` clears; `detach/0` stops counting.\n\nUsed as the validation loop for every new emission site (Task 7 defunified,\nTask 11 defstreaming, Task 15 memory monitor) before downstream consumers\n(PromEx plugin, Grafana) bake in assumptions about the contract. Auto-attached\nin dev via .iex.exs banner.\n",
+      "created_at": "2026-05-17",
+      "done_at": "2026-05-17",
+      "scored_at": "2026-05-17",
+      "implemented": "Shipped lib/ccxt_ocx/dev_telemetry.ex (Agent-backed dogfooding module: watch/1, summary/0, reset/0, detach/0; idempotent attach; :print/:filter/:io_device options; one-line pretty-print per event family). 14 tests covering attach/idempotency/filter/io_device/per-event routing/accumulation/last-wins/reset/detach. Added .iex.exs auto-attach with banner (guarded on Mix.env() == :dev AND Code.ensure_loaded?). docs/tidewave_examples.md: new 'Dev Telemetry Loop' section between Memory monitoring and Tidewave tools.",
       "cross_repo": []
     }
   ]

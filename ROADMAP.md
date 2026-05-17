@@ -49,11 +49,11 @@
 <!-- TASKS:BEGIN phase=2 -->
 | Task | Status | Notes |
 |------|--------|-------|
-| Task 6 | ⬜ | 🎁 **macros** · Discover and parse CCXT declaration sources with OXC [D:6/B:8/U:8 → Eff:1.33] 📋 |
-| Task 6b | ⬜ | 🎁 **macros** · `use CcxtOcx` — exchange-scope entrypoint [D:5/B:9/U:9 → Eff:1.8] 🚀 |
-| Task 7 | ⬜ | 🎁 **macros** · `defunified` macro [D:7/B:10/U:9 → Eff:1.36] 📋 |
-| Task 8 | ⬜ | 🎁 **macros** · Typed structs for unified return shapes (with declarative field mapping) [D:5/B:8/U:8 → Eff:1.6] 🚀 |
-| Task 9 | ⬜ | 🎁 **macros** · `defexchange` macro [D:6/B:7/U:6 → Eff:1.08] 📋 |
+| Task 6 | ⬜ | 🎁 **macros** · 🚀 **v0_1** · Discover and parse CCXT declaration sources with OXC [D:6/B:8/U:8 → Eff:1.33] 📋 |
+| Task 6b | ⬜ | 🎁 **macros** · 🚀 **v0_1** · `use CcxtOcx` — exchange-scope entrypoint [D:5/B:9/U:9 → Eff:1.8] 🚀 |
+| Task 7 | ⬜ | 🎁 **macros** · 🚀 **v0_1** · `defunified` macro [D:7/B:10/U:9 → Eff:1.36] 📋 |
+| Task 8 | ⬜ | 🎁 **macros** · 🚀 **v0_1** · Typed structs for unified return shapes (with declarative field mapping) [D:5/B:8/U:8 → Eff:1.6] 🚀 |
+| Task 9 | ⬜ | 🎁 **macros** · 🚀 **v0_1** · `defexchange` macro [D:6/B:7/U:6 → Eff:1.08] 📋 |
 | Task 10 | ⬜ | 🎁 **macros** · Symbol normalization layer [D:6/B:6/U:5 → Eff:0.92] ⚠️ |
 <!-- TASKS:END -->
 
@@ -66,9 +66,9 @@
 <!-- TASKS:BEGIN phase=3 -->
 | Task | Status | Notes |
 |------|--------|-------|
-| Task 11 | ⬜ | 🎁 **streaming** · `defstreaming` macro [D:7/B:9/U:8 → Eff:1.21] 📋 |
-| Task 12 | ⬜ | 🎁 **streaming** · `CcxtOcx.Stream` GenStage producer [D:6/B:7/U:6 → Eff:1.08] 📋 |
-| Task 13 | ⬜ | 🎁 **streaming** · Reconnect / heartbeat policy [D:6/B:8/U:7 → Eff:1.25] 📋 |
+| Task 11 | ⬜ | 🎁 **streaming** · 🚀 **v1_0** · `defstreaming` macro [D:7/B:9/U:8 → Eff:1.21] 📋 |
+| Task 12 | ⬜ | 🎁 **streaming** · 🚀 **v1_0** · `CcxtOcx.Stream` GenStage producer [D:6/B:7/U:6 → Eff:1.08] 📋 |
+| Task 13 | ⬜ | 🎁 **streaming** · 🚀 **v1_0** · Reconnect / heartbeat policy [D:6/B:8/U:7 → Eff:1.25] 📋 |
 <!-- TASKS:END -->
 
 ---
@@ -80,12 +80,12 @@
 <!-- TASKS:BEGIN phase=4 -->
 | Task | Status | Notes |
 |------|--------|-------|
-| Task T1 | ⬜ | 🎁 **trade-verify** · Testnet harness — Binance USDT-M futures [D:5/B:9/U:8 → Eff:1.7] 🚀 |
-| Task T2 | ⬜ | 🎁 **trade-verify** · Testnet harness — Deribit options [D:5/B:8/U:7 → Eff:1.5] 🚀 |
+| Task T1 | ⬜ | 🎁 **trade-verify** · 🚀 **v1_0** · Testnet harness — Binance USDT-M futures [D:5/B:9/U:8 → Eff:1.7] 🚀 |
+| Task T2 | ⬜ | 🎁 **trade-verify** · 🚀 **v1_0** · Testnet harness — Deribit options [D:5/B:8/U:7 → Eff:1.5] 🚀 |
 | Task T3 | ⬜ | 🎁 **trade-verify** · Testnet harness — OKX [D:5/B:7/U:6 → Eff:1.3] 📋 |
-| Task T4 | ⬜ | 🎁 **trade-verify** · Signed-payload byte-comparison harness [D:7/B:9/U:8 → Eff:1.21] 📋 |
-| Task T5 | ⬜ | 🎁 **trade-verify** · WS authenticated streams (`watchBalance`, `watchMyTrades`, `watchOrders`) [D:6/B:8/U:7 → Eff:1.25] 📋 |
-| Task T6 | ⬜ | 🎁 **trade-verify** · Document the actual stability surface [D:2/B:6/U:7 → Eff:3.25] 🎯 |
+| Task T4 | ⬜ | 🎁 **trade-verify** · 🚀 **v1_0** · Signed-payload byte-comparison harness [D:7/B:9/U:8 → Eff:1.21] 📋 |
+| Task T5 | ⬜ | 🎁 **trade-verify** · 🚀 **v1_0** · WS authenticated streams (`watchBalance`, `watchMyTrades`, `watchOrders`) [D:6/B:8/U:7 → Eff:1.25] 📋 |
+| Task T6 | ⬜ | 🎁 **trade-verify** · 🚀 **v1_0** · Document the actual stability surface [D:2/B:6/U:7 → Eff:3.25] 🎯 |
 <!-- TASKS:END -->
 
 ---
@@ -96,9 +96,9 @@
 | Task | Status | Notes |
 |------|--------|-------|
 | Task 14 | ✅ | 🎁 **production** · Telemetry events [D:3/B:7/U:7 → Eff:2.33] 🎯 |
-| Task 15 | ⬜ | 🎁 **production** · Memory monitoring + restart policy [D:5/B:8/U:7 → Eff:1.5] 🚀 |
+| Task 15 | ⬜ | 🎁 **production** · 🚀 **v1_0** · Memory monitoring + restart policy [D:5/B:8/U:7 → Eff:1.5] 🚀 |
 | Task 16 | ⬜ | 🎁 **production** · ApiToolkit integration [D:4/B:6/U:6 → Eff:1.5] 🚀 |
-| Task 16b | ⬜ | 🎁 **production** · Hoist rate-limit + nonce state into Elixir [D:7/B:9/U:8 → Eff:1.21] 📋 |
+| Task 16b | ⬜ | 🎁 **production** · 🚀 **v1_0** · Hoist rate-limit + nonce state into Elixir [D:7/B:9/U:8 → Eff:1.21] 📋 |
 | Task 17 | ⬜ | 🎁 **production** · Sandboxed deployment shape [D:5/B:8/U:5 → Eff:1.3] 📋 |
 | Task 21 | ✅ | 🎁 **production** · PromEx plugin (`CcxtOcx.PromEx.Plugin`) [D:3/B:7/U:7 → Eff:2.33] 🎯 |
 <!-- TASKS:END -->

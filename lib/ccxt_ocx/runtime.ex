@@ -169,9 +169,9 @@ defmodule CcxtOcx.Runtime do
       {:error, reason} ->
         {:stop, reason}
 
-      # TODO(Task 4): fold into CcxtOcx.Error taxonomy once it lands. Defensive
-      # catch-all — every helper in the `with` returns {:ok, _} | :ok | {:error, _}
-      # today, so this only fires if a future helper changes shape.
+      # TODO(Task 4): the remaining defensive catch-all is now only for shape
+      # changes in helper return values. Real JS errors from QuickBEAM are
+      # normalized via CcxtOcx.Error at the adapter/wrapper layer.
       other ->
         {:stop, {:unexpected_init_result, other}}
     end

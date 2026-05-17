@@ -8,6 +8,22 @@ All notable changes to `ccxt_ocx` are recorded here. The format follows
 
 ### Phase 1: Foundation — Runtime Lifecycle
 
+#### Task 4: `CcxtOcx.Error`
+**Completed** | [D:4/B:7/U:6 → Eff:1.62]
+
+Canonical error handling for the entire library.
+
+- Closed 9-tag taxonomy: `:bad_symbol | :network | :rate_limit | :auth | :not_found | :permission | :exchange | :timeout | :unknown`.
+- `%CcxtOcx.Error{}` struct with required `:tag`, `:source`, `:source_name` plus optional `:exchange`, `:method`, `:original`, `:meta`.
+- `:source` / `:source_name` discriminator future-proofs the shape for Phase 7 native adapters (e.g. `source: :binance`, `source_name: "51000"`).
+- Three-function surface:
+  - `tag_for_ccxt_class/1` — pure CCXT class → tag mapper (used by the gate).
+  - `from_js_error/2` — turns `%QuickBEAM.JSError{}` or raw map into the struct.
+  - `normalize/2` — primary wrapper API; accepts raw error / tag / struct + keyword opts for context injection.
+- Compile-time drift gate: `@external_resource "ccxt/js/src/base/errors.d.ts"` + exhaustive check at compile time. New CCXT error subclasses fail the build until mapped.
+- Full `Exception` behaviour (raise / `Exception.message/1` / rescue).
+- Tests cover the pure mapping table plus real CCXT error objects constructed inside a QuickBEAM runtime.
+
 #### Task 1: `CcxtOcx.Runtime`
 **Completed** | [D:4/B:9/U:9 → Eff:2.25]
 

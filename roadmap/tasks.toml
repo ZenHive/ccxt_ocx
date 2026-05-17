@@ -228,6 +228,10 @@ Implementation: reads scope at compile time, iterates the chosen exchange list, 
 - **Option C — `[:binance]`:** minimal viable; gentle ramp.
 
 Pick before Task 7 lands so the macro contract is stable.
+
+[Tidewave dogfooding 2026-05-17]
+- Use Tidewave to simulate "use CcxtOcx, exchanges: [:deribit]" by starting only scoped runtimes and exercising complex methods (options).
+- Validate that limiting scope dramatically reduces memory/CPU vs loading all 100+.
 """
 
 [[task]]
@@ -243,6 +247,13 @@ body = """
 Single declaration emits the QuickBEAM call, JSON encode of args, await + decode, struct hydration, and error normalization for one unified method *across the exchanges declared in `use CcxtOcx`*. Emission is gated by Task 6b's scope — never iterate over all 100+ unconditionally. NimbleOptions schema validates the macro options at compile time (per `~/.claude/includes/development-philosophy.md` § "Cite Ecosystem Precedents"). Phoenix.Router and Ash.Resource are the precedents — single declarative line, full generated wrapper.
 
 **Capability-gated emission:** read each exchange's `has` table at compile time (via the same throwaway runtime Task 9 boots — share the cached `priv/exchange_caps/<id>.exs` output) and *only emit* a method on that exchange's module if `ex.has[method] == true`. Result: calling `CcxtOcx.Binance.fetch_some_unsupported_method/2` raises `UndefinedFunctionError` at compile, not a runtime `{:error, :not_supported}`. Tighter contract; tradeoff is that `mix docs` per-exchange diverges and IDE completion reflects the per-venue surface (which is arguably correct, since the surface IS per-venue). Task 9's `has?/1` becomes a runtime introspection helper for user-supplied venue lists, not a routing primitive used by `defunified` itself.
+
+[Tidewave dogfooding 2026-05-17]
+- Use live CcxtOcx.Runtime + Tidewave::project_eval to drive real methods (fetchOptionChain on Deribit) before designing expansion.
+- Pattern: define global async helper via eval, then call/4 (direct eval(async IIFE) frequently returns {} after suspension).
+- fetchOptionChain bulk shape often lacks .strike/.optionType at top level; must parse from symbol (e.g. ETH/USD:ETH-260519-2375-P).
+- IV/greeks sparse on chain response; per-symbol fetchOption richer. Test both paths via Tidewave.
+- Add Tidewave-driven examples for complex returns (option chains, order books) to task acceptance.
 """
 
 [[task]]
@@ -286,6 +297,11 @@ The macro expands to the struct definition + a generated `from_ccxt/1` that walk
 **Scope locked to CCXT-shape only.** `from:` declares the CCXT-shape key — *not* the raw-venue key. Native adapters (Phase 7 / N0) own their own per-venue parser layer that emits the canonical struct directly from raw-venue JSON; they do NOT route through Task 8's `from_ccxt/1`. This keeps venue-specific knowledge out of the struct definition and inside N0's per-exchange extracted manifest. The two adapter paths converge on the *struct*, not on a shared parser pipeline.
 
 **NimbleOptions on the field declaration.** Per `~/.claude/includes/development-philosophy.md` § "Cite Ecosystem Precedents Before Crying Complexity": Ecto.Schema's `field/3`, Ash.Resource attributes, LiveView's `attr/3`, and TypedStruct all establish the precedent — single declaration → struct + types + validation + codegen. NimbleOptions schema validates the option keyword at compile time; unknown type tags fail compile rather than at first parse.
+
+[Tidewave dogfooding 2026-05-17]
+- Use Tidewave + live runtime to inspect real CCXT return shapes (fetchOptionChain, fetchOption) before declaring fields.
+- Observed: strike/expiry often absent or under .info on bulk; symbol string authoritative for options. from_ccxt must handle sparse fields + venue keys.
+- Add Tidewave repro steps for each struct in acceptance criteria.
 """
 
 [[task]]
@@ -299,6 +315,10 @@ scored_at = "2026-05-16"
 depends_on = ["6b"]
 body = """
 Per-exchange module emitter. `defexchange :binance` walks `ex.urls`, `ex.has`, `ex.timeframes`, `ex.options.defaultType` once at compile time (booting a throwaway runtime during compile) and emits a struct + capability table. Generated module exposes `CcxtOcx.Binance.has?/1`, `urls/0`, `timeframes/0`. Invocation is driven by Task 6b's `use CcxtOcx` scope — only declared exchanges get a runtime spun up at compile, not all 100+. Compile-time bundle eval is the unusual move — vet first that the build environment can run QuickBEAM. **Cache the introspection output to `priv/exchange_caps/<id>.exs`** so subsequent compiles don't re-boot a runtime per exchange; regenerate on bundle bumps via the Task 5b verification pipeline.
+
+[Tidewave dogfooding 2026-05-17]
+- Use Tidewave to boot throwaway runtimes and inspect has/fetchOptionChain etc. exactly as compile-time `defexchange` will.
+- Validate that the cached caps capture complex surfaces (options) correctly.
 """
 
 [[task]]
@@ -311,6 +331,11 @@ scores = { d = 6, b = 6, u = 5 }
 scored_at = "2026-05-16"
 body = """
 The `BTC/USDT` vs `BTC/USDT:USDT` quirk surfaced live. Some exchanges use `:` for perps, some use `-PERP`, some use venue-specific tickers. Document a mapping function `CcxtOcx.Symbol.normalize/3` and a counterpart `denormalize/3`. Don't over-engineer — start by accepting both forms and routing.
+
+[Tidewave dogfooding 2026-05-17]
+- Use Tidewave + CcxtOcx.Runtime to exercise real symbols: Deribit options use `ETH/USD:ETH-260519-2375-P` (YYMMDD + strike + C/P).
+- Normalize must handle embedded expiry/strike for options, not just spot/perp variants.
+- Add Tidewave repro for roundtrip normalize/denormalize on option symbols to task.
 """
 
 # Phase 3 — Streaming ─────────────────────────────────────────────────────
@@ -378,6 +403,12 @@ scores = { d = 5, b = 8, u = 7 }
 scored_at = "2026-05-16"
 body = """
 Deribit testnet is the gold standard for options/perp signing edge cases. Same pattern as T1.
+
+[Tidewave dogfooding 2026-05-17]
+- Use live Tidewave + Runtime to drive fetchOptionChain + fetchOption on Deribit before building harness.
+- Observed: 748 instruments for ETH, front expiry (260519) has 44 contracts; strike parsed from symbol; IV sparse on bulk.
+- Testnet harness must also cover public data plane (option chains, greeks) not just signing.
+- Mandate Tidewave-driven exploration step in task before writing testnet code.
 """
 
 [[task]]
@@ -440,6 +471,10 @@ title = "Telemetry events"
 scores = { d = 3, b = 7, u = 7 }
 body = """
 `[:ccxt_ocx, :rest, :start | :stop | :exception]`, `[:ccxt_ocx, :ws, :tick]`, `[:ccxt_ocx, :runtime, :memory]`. Standard `:telemetry` shape so downstream metrics stacks (Prometheus, Datadog) plug in with no glue.
+
+[Tidewave dogfooding 2026-05-17]
+- Use Tidewave project_eval + live CcxtOcx.Runtime to trigger real calls (fetchTicker, fetchOptionChain) and verify events are emitted.
+- Best validation: run complex surfaces (Deribit options) via Tidewave while attached telemetry handlers are active.
 """
 started_at = "2026-05-17"
 scored_at = "2026-05-16"
@@ -455,6 +490,10 @@ scores = { d = 5, b = 8, u = 7 }
 scored_at = "2026-05-16"
 body = """
 `QuickBEAM.memory_usage/1` polled per runtime; restart on threshold (default ~64MB resident). Long-running WS runtimes accumulate state via subscription buffers — a 24h restart cadence is cheap insurance.
+
+[Tidewave dogfooding 2026-05-17]
+- Use Tidewave + CcxtOcx.Runtime.memory/1 while driving heavy calls (fetchOptionChain on large surfaces) to validate measurement + telemetry emission.
+- Best signal: run real option chain + ticker workloads via Tidewave while watching memory events.
 """
 
 [[task]]

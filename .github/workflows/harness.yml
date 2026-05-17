@@ -106,8 +106,14 @@ jobs:
       # later phases should add a per-module 95% ratchet as a separate job
       # rather than raising this global floor (mixed-tier codebases stuck at
       # 95% global block too often).
+      # `:integration` tests need the on-disk CCXT bundle (which we install above
+      # via `mix npm.ci`) but no network — include them so bundle-dependent paths
+      # (BundleSurface.Compile, smoke offline bundle/OXC checks) count toward
+      # the coverage gate. `test_helper.exs` excludes `:integration` and `:network`
+      # by default for local fast feedback; we re-include `:integration` in CI
+      # where the bundle is always present, and keep `:network` excluded.
       - name: Tests + coverage gate (>=80%)
-        run: mix test.json --cover --cover-threshold 80 --summary-only --exclude integration
+        run: mix test.json --cover --cover-threshold 80 --summary-only --include integration --exclude network
 
       - name: Dialyzer
         run: mix dialyzer

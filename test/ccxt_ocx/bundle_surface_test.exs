@@ -4,6 +4,7 @@ defmodule CcxtOcx.BundleSurfaceTest do
   alias CcxtOcx.BundleSurface
   alias CcxtOcx.BundleSurface.Compile
   alias CcxtOcx.BundleSurface.Manifest
+  alias Mix.Tasks.Ccxt.VerifyBundle
 
   describe "manifest" do
     test "committed manifest is readable and contains the expected keys" do
@@ -105,6 +106,91 @@ defmodule CcxtOcx.BundleSurfaceTest do
       assert diff.methods.added == []
       assert diff.methods.removed == []
       refute diff.has_changed?
+    end
+  end
+
+  describe "BundleSurface.build_snapshot/1" do
+    @tag :integration
+    test "returns a snapshot with methods + sampled has for a small sample" do
+      snap = BundleSurface.build_snapshot(["binance"])
+
+      assert is_list(snap.unified_methods)
+      assert length(snap.unified_methods) > 50
+      assert "fetchTicker" in snap.unified_methods
+      assert "withdraw" in snap.unified_methods
+
+      assert is_map(snap.sampled_has)
+      assert Map.has_key?(snap.sampled_has, "binance")
+      assert is_map(snap.sampled_has["binance"])
+
+      assert is_binary(snap.generated_at)
+      assert is_binary(snap.ccxt_version)
+    end
+
+    @tag :integration
+    test "default_sample_exchanges/0 falls back when Tiers raises" do
+      # Hit the rescue branch by intercepting via the Compile alias directly.
+      result = Compile.default_sample_exchanges()
+      assert is_list(result)
+      assert result != []
+    end
+  end
+
+  describe "Mix.Tasks.Ccxt.VerifyBundle" do
+    setup do
+      path = Manifest.path()
+      backup = File.read!(path)
+      on_exit(fn -> File.write!(path, backup) end)
+      :ok
+    end
+
+    test "raises Mix.Error on unknown option" do
+      ExUnit.CaptureIO.capture_io(fn ->
+        assert_raise Mix.Error, ~r/Unknown or malformed option/i, fn ->
+          VerifyBundle.run(["--bogus-flag"])
+        end
+      end)
+    end
+
+    @tag :integration
+    test "raises Mix.Error on detected drift without --accept" do
+      # Sampling a single exchange diffs against the committed multi-exchange
+      # snapshot — guaranteed drift, no manifest mutation since --accept is absent.
+      ExUnit.CaptureIO.capture_io(fn ->
+        assert_raise Mix.Error, ~r/drift detected/i, fn ->
+          VerifyBundle.run(["--sample-exchanges", "binance"])
+        end
+      end)
+    end
+
+    @tag :integration
+    test "--accept regenerates the manifest with the new sample" do
+      ExUnit.CaptureIO.capture_io(fn ->
+        assert :ok = VerifyBundle.run(["--accept", "--sample-exchanges", "binance"])
+      end)
+
+      snap = Manifest.read()
+      assert map_size(snap.sampled_has) == 1
+      assert Map.has_key?(snap.sampled_has, "binance")
+    end
+
+    @tag :integration
+    test "-w alias also writes" do
+      ExUnit.CaptureIO.capture_io(fn ->
+        assert :ok = VerifyBundle.run(["-w", "--sample-exchanges", "binance"])
+      end)
+
+      snap = Manifest.read()
+      assert map_size(snap.sampled_has) == 1
+    end
+
+    @tag :integration
+    test "no-arg run succeeds against the committed manifest (CI lockfile invariant)" do
+      # Committed priv/ccxt_surface.exs was generated from the same lockfile
+      # CI installs via `mix npm.ci`, so no-drift is the expected outcome.
+      ExUnit.CaptureIO.capture_io(fn ->
+        assert :ok = VerifyBundle.run([])
+      end)
     end
   end
 

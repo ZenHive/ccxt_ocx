@@ -41,9 +41,11 @@ defmodule Mix.Tasks.Ccxt.VerifyBundle do
   @impl true
   @spec run([String.t()]) :: :ok
   def run(args) do
+    # `strict:` (not `switches:`) so unknown flags land in `invalid` and we can
+    # surface them via `Mix.raise/1` — `switches:` silently ignores unknown opts.
     {opts, _rest, invalid} =
       OptionParser.parse(args,
-        switches: [accept: :boolean, write: :boolean, sample_exchanges: :string],
+        strict: [accept: :boolean, write: :boolean, sample_exchanges: :string],
         aliases: [a: :accept, w: :write]
       )
 

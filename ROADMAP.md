@@ -25,7 +25,7 @@
 
 **Last shipped:** no recent shipments
 
-**Up next:** Task 4 — `CcxtOcx.Error` — canonical error taxonomy + JS adapter mapping [D:4/B:7/U:6 → Eff:1.62] 🚀
+**Up next:** Task 3 — `CcxtOcx.RuntimePool` (in progress)
 <!-- FOCUS:END -->
 
 ---
@@ -40,7 +40,7 @@
 | Task 1 | ✅ | 🎁 **foundation** · `CcxtOcx.Runtime` module [D:4/B:9/U:9 → Eff:2.25] 🎯 |
 | Task 2 | ✅ | 🎁 **foundation** · Pin `quickbeam ~> 0.10.4` and document why [D:1/B:5/U:6 → Eff:5.5] 🎯 |
 | Task 3 | 🔄 | 🎁 **foundation** · `CcxtOcx.RuntimePool` supervisor [D:5/B:8/U:7 → Eff:1.5] 🚀 |
-| Task 4 | ⬜ | 🎁 **foundation** · `CcxtOcx.Error` — canonical error taxonomy + JS adapter mapping [D:4/B:7/U:6 → Eff:1.62] 🚀 |
+| Task 4 | ✅ | 🎁 **foundation** · `CcxtOcx.Error` — canonical 9-tag taxonomy + `:source`/`:source_name` discriminator + `normalize/2` + compile-time drift gate on `errors.d.ts` [D:4/B:7/U:6 → Eff:1.62] 🎯 |
 | Task 5 | ✅ | 🎁 **foundation** · Smoke test suite [D:3/B:6/U:5 → Eff:1.83] 🚀 |
 | Task 5b | ⬜ | 🎁 **foundation** · Bundle-bump verification pipeline [D:5/B:8/U:8 → Eff:1.6] 🚀 |
 | Task 5c | ✅ | 🎁 **foundation** · `CcxtOcx.Tiers` — priority-tier classification [D:4/B:7/U:8 → Eff:1.88] 🚀 |

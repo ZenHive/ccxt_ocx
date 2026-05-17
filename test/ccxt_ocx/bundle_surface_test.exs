@@ -24,6 +24,31 @@ defmodule CcxtOcx.BundleSurfaceTest do
   end
 
   describe "OXC extraction" do
+    test "extract_unified_methods filters a small local declaration fixture" do
+      path =
+        temp_file!("exchange_fixture.d.ts", """
+        export default class Exchange {
+          fetchTicker(): Promise<object>;
+          createOrder(): Promise<object>;
+          withdraw(): Promise<object>;
+          parseTrade(): object;
+          request(): Promise<object>;
+          fetch2(): Promise<object>;
+          loadMarketsHelper(): Promise<object>;
+        }
+        """)
+
+      assert Compile.extract_unified_methods(path) == ["createOrder", "fetchTicker", "withdraw"]
+    end
+
+    test "extract_unified_methods raises when the declaration file is missing" do
+      missing_path = Path.join(System.tmp_dir!(), "ccxt_ocx_missing_exchange.d.ts")
+
+      assert_raise RuntimeError, ~r/CCXT declaration file not found/, fn ->
+        Compile.extract_unified_methods(missing_path)
+      end
+    end
+
     @tag :integration
     test "extract_unified_methods finds the smoke surface from Exchange.d.ts" do
       path = Compile.exchange_dts_path()
@@ -131,6 +156,25 @@ defmodule CcxtOcx.BundleSurfaceTest do
   end
 
   describe "BundleSurface.build_snapshot/1" do
+    test "probe_has_tables raises when configured bundle path is missing" do
+      old_path = Application.get_env(:ccxt_ocx, :bundle_path)
+      missing_path = Path.join(System.tmp_dir!(), "ccxt_ocx_missing_bundle.js")
+
+      Application.put_env(:ccxt_ocx, :bundle_path, missing_path)
+
+      on_exit(fn ->
+        if old_path do
+          Application.put_env(:ccxt_ocx, :bundle_path, old_path)
+        else
+          Application.delete_env(:ccxt_ocx, :bundle_path)
+        end
+      end)
+
+      assert_raise RuntimeError, ~r/CCXT bundle not found/, fn ->
+        Compile.probe_has_tables(["binance"])
+      end
+    end
+
     @tag :integration
     test "returns a snapshot with methods + sampled has for a small sample" do
       snap = BundleSurface.build_snapshot(["binance"])
@@ -253,5 +297,14 @@ defmodule CcxtOcx.BundleSurfaceTest do
       {term, _} = Code.eval_file(target)
       assert term == snapshot
     end
+  end
+
+  defp temp_file!(name, content) do
+    dir = Path.join(System.tmp_dir!(), "ccxt_ocx_bundle_surface_test_#{System.unique_integer([:positive])}")
+    File.mkdir_p!(dir)
+    path = Path.join(dir, name)
+    File.write!(path, content)
+    on_exit(fn -> File.rm_rf(dir) end)
+    path
   end
 end

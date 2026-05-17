@@ -768,3 +768,30 @@ scored_at = "2026-05-16"
 body = """
 Document the operational tax: every CCXT release ships adapter fixes (new fields, normalized formats, bug fixes for venue API changes). Once on native, those don't propagate. Either pin a CCXT version and accept drift, or subscribe to CCXT's git log and port relevant fixes per release for migrated exchanges. The honest framing is "native exchanges are now your responsibility to maintain"; budget engineering time accordingly.
 """
+
+[[task]]
+id = "22"
+phase = 6
+bundle = "dx"
+status = "done"
+title = "Dev telemetry dogfooding loop (CcxtOcx.DevTelemetry)"
+scores = { d = 2, b = 5, u = 8 }
+depends_on = ["14"]
+acceptance_criteria = ["lib/ccxt_ocx/dev_telemetry.ex exports watch/1, summary/0, reset/0, detach/0", "watch/1 is idempotent — re-call resets state and only one handler stays attached", "watch/1 supports :print, :filter, :io_device options", "summary/0 returns initial all-zeros state when watch/1 was never called (no Agent process)", "reset/0 is a no-op when Agent was never started", "detach/0 is idempotent", "Every event family routes to its own counter bucket (runtime_memory, rest_start/stop/exception, ws_tick)", ".iex.exs auto-attaches in dev with a one-line banner; guarded on Mix.env() == :dev AND Code.ensure_loaded?", "docs/tidewave_examples.md has a 'Dev Telemetry Loop' section showing watch → drive → summary → reset → detach", "Full harness green: format, compile --warnings-as-errors, test.json, credo --strict, dialyzer.json, doctor"]
+out_of_scope = ["Persisting DevTelemetry state across IEx sessions", "Production-mode telemetry (logging handlers, structured-log shipping)", "Supervisor entry — watch/1 starts the Agent lazily; dev tool only"]
+body = """
+Maintainer-side dogfooding companion to CcxtOcx.Telemetry. One `watch/1` call
+attaches to every [:ccxt_ocx, ...] event family, pretty-prints each emission
+to a configurable IO device, and keeps running counts plus last-seen
+measurements/metadata in an Agent. `summary/0` dumps state on demand;
+`reset/0` clears; `detach/0` stops counting.
+
+Used as the validation loop for every new emission site (Task 7 defunified,
+Task 11 defstreaming, Task 15 memory monitor) before downstream consumers
+(PromEx plugin, Grafana) bake in assumptions about the contract. Auto-attached
+in dev via .iex.exs banner.
+"""
+implemented = "Shipped lib/ccxt_ocx/dev_telemetry.ex (Agent-backed dogfooding module: watch/1, summary/0, reset/0, detach/0; idempotent attach; :print/:filter/:io_device options; one-line pretty-print per event family). 14 tests covering attach/idempotency/filter/io_device/per-event routing/accumulation/last-wins/reset/detach. Added .iex.exs auto-attach with banner (guarded on Mix.env() == :dev AND Code.ensure_loaded?). docs/tidewave_examples.md: new 'Dev Telemetry Loop' section between Memory monitoring and Tidewave tools."
+created_at = "2026-05-17"
+scored_at = "2026-05-17"
+done_at = "2026-05-17"

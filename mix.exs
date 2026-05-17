@@ -51,8 +51,10 @@ defmodule CcxtOcx.MixProject do
       {:telemetry, "~> 1.3"},
 
       # Optional PromEx plugin (Task 21 — CcxtOcx.PromEx.Plugin).
-      # Consumers add prom_ex to their own deps; we only need it present
-      # at compile time so `use PromEx.Plugin` expands cleanly.
+      # Consumers add prom_ex to their own deps. The plugin module
+      # itself is wrapped in `Code.ensure_loaded?(PromEx.Plugin)` so
+      # downstream projects that don't depend on prom_ex still compile
+      # ccxt_ocx cleanly — the module simply isn't defined for them.
       {:prom_ex, "~> 1.11", optional: true},
 
       # JSON

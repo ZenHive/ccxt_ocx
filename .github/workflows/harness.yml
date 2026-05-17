@@ -76,6 +76,12 @@ jobs:
       - name: Install npm packages (CCXT bundle)
         run: mix npm.ci
 
+      # Task 5b — bundle surface verification gate.
+      # Fails on public API drift from CCXT upgrades unless the manifest was
+      # deliberately updated with human review (`mix ccxt.verify_bundle --accept`).
+      - name: Verify CCXT bundle surface (Task 5b)
+        run: mix ccxt.verify_bundle
+
       - name: Compile (warnings as errors)
         run: mix compile --warnings-as-errors
 

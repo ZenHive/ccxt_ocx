@@ -8,6 +8,20 @@ All notable changes to `ccxt_ocx` are recorded here. The format follows
 
 ### Phase 1: Foundation — Runtime Lifecycle
 
+#### Task 5b: Bundle-bump verification pipeline
+**Completed** | [D:5/B:8/U:8 → Eff:1.6]
+
+`mix ccxt.verify_bundle` + supporting `CcxtOcx.BundleSurface.*` modules that protect the compile-time generated surface from silent regressions when CCXT releases (multiple times per week).
+
+- New persistent, human-reviewable manifest at `priv/ccxt_surface.exs` (unified public methods + sampled per-exchange `has` tables).
+- `CcxtOcx.BundleSurface.Compile` – OXC extraction of the unified method list from `Exchange.d.ts` + throwaway QuickBEAM probe for live `has` tables (modeled on the existing `Tiers.Compile` pattern).
+- `Mix.Tasks.Ccxt.VerifyBundle` – the CLI entry point (`mix ccxt.verify_bundle` and `--accept` for deliberate drift).
+- `@external_resource` on the manifest so changing the committed surface forces recompilation of downstream macro modules.
+- CI step added to the harness after `mix npm.ci` — every PR that touches the CCXT package now runs the verifier.
+- Minimal test coverage for the extraction + manifest read paths.
+
+This is the last piece of Phase 1. Future macro work (Tasks 6–9) and the testnet harnesses (T1–T3) can now safely ride on top of a verified CCXT bundle.
+
 #### Task 3: `CcxtOcx.RuntimePool`
 **Completed** | [D:5/B:8/U:7 → Eff:1.5]
 

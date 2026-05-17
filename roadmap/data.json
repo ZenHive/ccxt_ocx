@@ -182,7 +182,7 @@
       "id": "5b",
       "phase": 1,
       "bundle": "foundation",
-      "status": "pending",
+      "status": "done",
       "title": "Bundle-bump verification pipeline",
       "scores": {
         "d": 5,

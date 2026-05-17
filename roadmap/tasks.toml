@@ -162,7 +162,7 @@ ExUnit tag `:integration` (off by default), tagged `:network` for tests that hit
 id = "5b"
 phase = 1
 bundle = "foundation"
-status = "pending"
+status = "done"
 title = "Bundle-bump verification pipeline"
 scores = { d = 5, b = 8, u = 8 }
 scored_at = "2026-05-16"

@@ -84,16 +84,21 @@ defmodule CcxtOcx.DeclarationsTest do
     test "distinguishes base / exchange / pro surfaces and populates overrides" do
       terms = Declarations.parse_unified_surface()
 
-      # We expect at least some exchange-level .d.ts and some pro/ files to contribute
-      all_surfaces =
+      # `overrides` is keyed by "surface:exchange_id" strings, so we must read the
+      # surface atoms off the override VALUES, not Map.keys/1.
+      primary_surfaces =
         terms
-        |> Enum.flat_map(fn t -> [t.primary.surface] ++ Map.keys(t.overrides) end)
+        |> Enum.map(& &1.primary.surface)
         |> Enum.uniq()
 
-      assert :base in all_surfaces
-      # At least one exchange override or pro entry should exist for realism
-      assert Enum.any?(terms, fn t -> map_size(t.overrides) > 0 end),
-             "expected at least one method with an override entry from exchange or pro surface"
+      override_surfaces =
+        terms
+        |> Enum.flat_map(fn t -> t.overrides |> Map.values() |> Enum.map(& &1.surface) end)
+        |> Enum.uniq()
+
+      assert :base in primary_surfaces
+      assert :exchange in override_surfaces, "expected at least one :exchange override across the unified surface"
+      assert :pro in override_surfaces, "expected at least one :pro override across the unified surface"
     end
   end
 

@@ -372,16 +372,33 @@ defmodule CcxtOcx.Declarations.Compile do
       """
     end
 
-    # Also assert that at least one of them truly came from the base Exchange.d.ts
-    base_sources =
-      terms
-      |> Enum.filter(&(&1.name in @required_smoke_methods))
-      |> Enum.map(& &1.primary.source)
+    # Each required smoke method MUST be primary :base from Exchange.d.ts.
+    # `Enum.any?` would pass silently if e.g. createOrder moved to pro while
+    # fetchTicker stayed on base — exactly the layout drift this guard exists
+    # to catch.
+    by_name = Map.new(terms, &{&1.name, &1})
 
-    if !Enum.any?(base_sources, &String.ends_with?(&1, "Exchange.d.ts")) do
+    non_base =
+      Enum.reject(@required_smoke_methods, fn name ->
+        case Map.get(by_name, name) do
+          %{primary: %{surface: :base, source: src}} -> String.ends_with?(src, "Exchange.d.ts")
+          _ -> false
+        end
+      end)
+
+    if non_base != [] do
       raise """
-      Smoke methods were found but none had primary surface :base from Exchange.d.ts.
-      Layout guard tripped.
+      CCXT declaration layout changed — required smoke methods are not primary :base
+      from Exchange.d.ts.
+
+      Not primary :base:
+        #{inspect(non_base)}
+
+      Expected each of #{inspect(@required_smoke_methods)} to be declared in:
+        #{base_dts_path()}
+
+      If CCXT genuinely reorganized these methods onto another surface, update the
+      discovery globs in Declarations.Compile and the @required_smoke_methods list.
       """
     end
 

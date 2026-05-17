@@ -12,7 +12,10 @@ defmodule CcxtOcx.MixProject do
       aliases: aliases(),
       dialyzer: [
         plt_add_deps: :apps_direct,
-        plt_add_apps: [:mix],
+        # :telemetry_metrics is transitively provided by :prom_ex (optional dep)
+        # — surface it for the CcxtOcx.PromEx.Plugin metric DSL (last_value/2,
+        # distribution/2, counter/2).
+        plt_add_apps: [:mix, :telemetry_metrics],
         plt_local_path: "priv/plts",
         plt_core_path: "priv/plts",
         ignore_warnings: ".dialyzer_ignore.exs"

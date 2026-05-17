@@ -574,6 +574,33 @@ body = """
 **Progress (2026-05-17):** Initial `docs/tidewave_examples.md` created and expanded with real patterns from live Tidewave sessions (Deribit option chains, define+call pattern, telemetry watching, complex surface pressure-testing). Referenced from README.md and CLAUDE.md.
 """
 
+[[task]]
+id = "21"
+phase = 5
+bundle = "production"
+status = "done"
+title = "PromEx plugin (`CcxtOcx.PromEx.Plugin`)"
+scores = { d = 3, b = 7, u = 7 }
+scored_at = "2026-05-17"
+started_at = "2026-05-17"
+done_at = "2026-05-17"
+depends_on = ["14"]
+body = """
+First-class [PromEx](https://hex.pm/packages/prom_ex) plugin mapping every `[:ccxt_ocx, ...]` event in `CcxtOcx.Telemetry` to Prometheus metrics with zero glue. Consumers add `{:prom_ex, "~> 1.11"}` to their own deps and reference `CcxtOcx.PromEx.Plugin` in their PromEx config; the dep is declared `optional: true` here so consumers who don't want PromEx aren't forced into it.
+
+Provides last_value memory metrics (live today via Task 14 emissions), reserved REST distribution/counter metrics (Phase 2 `defunified` lights up emission), and a reserved WS tick counter (Phase 3 `defstreaming`). Tag normalizers default missing metadata keys to `"none"` so Prometheus labels stay stable across emission sites.
+"""
+acceptance_criteria = [
+  "lib/ccxt_ocx/prom_ex/plugin.ex exposes event_metrics/1 + polling_metrics/1",
+  "Metric definitions cover runtime memory (live), REST (Phase 2-reserved), WS tick (Phase 3-reserved)",
+  "Tag normalizers default missing metadata keys to \"none\" for stable Prometheus labels",
+  "`{:prom_ex, optional: true}` in mix.exs; `:plug` reachable in :test for PromEx.Plug compile",
+  "test/ccxt_ocx/prom_ex/plugin_test.exs verifies shape + live-emission smoke",
+  "Plugin module coverage at or above 80% (standard tier)",
+  "README has an 'Observability — PromEx' section with the consumer config snippet"
+]
+out_of_scope = ["Grafana dashboard JSON", "Consumer-side example harness app", "Production scrape integration tests"]
+
 # Phase 7 — Native-Elixir Migration ───────────────────────────────────────
 
 [[task]]

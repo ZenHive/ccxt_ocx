@@ -8,6 +8,17 @@ All notable changes to `ccxt_ocx` are recorded here. The format follows
 
 ### Phase 5: Production Hardening
 
+#### Task 21: PromEx plugin (`CcxtOcx.PromEx.Plugin`)
+**Completed** | [D:3/B:7/U:7 → Eff:2.33] 🎯
+
+Ship-with-the-library PromEx plugin that maps every `[:ccxt_ocx, ...]` event to Prometheus metrics with zero glue.
+
+- New `CcxtOcx.PromEx.Plugin` — `event_metrics/1` covers runtime memory (live), REST (Phase 2-reserved), and WS tick (Phase 3-reserved). `polling_metrics/1` is opt-in via `pool:` / `poll_rate:` opts and drives `CcxtOcx.RuntimePool.memory/1` on a timer.
+- Tag normalizers default missing metadata keys to `"none"`, stringify atoms, and inspect PIDs — Prometheus labels stay stable across emission sites (Runtime, RuntimePool, future macro-generated callers).
+- `{:prom_ex, "~> 1.11", optional: true}` — pulled in for compile but not forced on consumers. `:bandit` extended to `:test` so `PromEx.Plug` compiles. `:telemetry_metrics` added to dialyzer `plt_add_apps`.
+- "Observability — PromEx" section in README with consumer config snippet.
+- Tests cover plugin shape, polling gating, custom poll rates, and live-emission tag normalization.
+
 #### Task 14: Telemetry events
 **Completed** | [D:3/B:7/U:7 → Eff:2.33] 🎯
 

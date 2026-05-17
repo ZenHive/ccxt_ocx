@@ -505,6 +505,7 @@ scored_at = "2026-05-16"
 body = """
 `mix docs` generates `doc/llms.txt` per the elixir-setup convention. AI agents pulling ccxt_ocx as a dependency get a structured summary.
 """
+depends_on = ["7"]
 
 [[task]]
 id = "19"

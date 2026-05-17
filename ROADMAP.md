@@ -25,7 +25,7 @@
 
 **Last shipped:** no recent shipments
 
-**Up next:** Task 18 — ex_doc + llms.txt [D:2/B:5/U:5 → Eff:2.5] 🎯
+**Up next:** Task 14 — Telemetry events [D:3/B:7/U:7 → Eff:2.33] 🎯
 <!-- FOCUS:END -->
 
 ---

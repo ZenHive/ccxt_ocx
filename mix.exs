@@ -41,6 +41,9 @@ defmodule CcxtOcx.MixProject do
       {:quickbeam, "~> 0.10.12"},
       {:npm, "~> 0.7.1"},
 
+      # Pooling — long-lived CCXT runtimes (Task 3)
+      {:nimble_pool, "~> 1.1"},
+
       # JSON
       {:jason, "~> 1.4.5"},
 

@@ -114,7 +114,8 @@ body = """
 id = "3"
 phase = 1
 bundle = "foundation"
-status = "pending"
+status = "in_progress"
+branch = "feat/task-3-runtime-pool"
 title = "`CcxtOcx.RuntimePool` supervisor"
 scores = { d = 5, b = 8, u = 7 }
 scored_at = "2026-05-16"

@@ -1,3 +1,2 @@
-
-Traversal.FileModule: Directory Traversal in `File.read`,lib/ccxt_ocx/runtime.ex:221,1F7A783
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/tiers/compile.ex:68,7844D5D
+Traversal.FileModule: Directory Traversal in `File.read`,lib/ccxt_ocx/runtime.ex:234,2105A9C

@@ -8,6 +8,35 @@ All notable changes to `ccxt_ocx` are recorded here. The format follows
 
 ### Phase 1: Foundation — Runtime Lifecycle
 
+#### Task 3: `CcxtOcx.RuntimePool`
+**Completed** | [D:5/B:8/U:7 → Eff:1.5]
+
+Supervised pool of long-lived `CcxtOcx.Runtime` workers built on `NimblePool`.
+Each worker keeps its QuickBEAM runtime alive across calls so the ~2s CCXT
+bundle eval is paid once per worker boot rather than once per `run/3` call.
+
+- `CcxtOcx.RuntimePool.start_link/1` (`:name`, `:size`, `:runtime_opts`).
+- `run/3` — primary call path; checks out a worker, invokes
+  `fun.(rt)` against the raw QuickBEAM handle, checks back in.
+- `info/1` — diagnostic snapshot (`size`, `ccxt_version`, `exchange_count`)
+  cached at start-up via a synchronous probe runtime.
+- `stop/1` — cascading shutdown that unlinks, monitors, and casts; idempotent
+  against an already-dead pid.
+- Application supervisor conditionally starts `CcxtOcx.RuntimePool.Default`
+  when `:start_default_pool` is true (default).
+- Crash recovery: idle dead workers are caught lazily by
+  `handle_checkout/4`'s `Process.alive?/1` check; checked-out worker deaths
+  are caught via NimblePool's client monitor. Bundle-reload cost is paid on
+  death, not per call.
+- `pool_size/0` defaults to `System.schedulers_online()` (read at start time,
+  not compile time).
+- Adds `{:nimble_pool, "~> 1.1"}` to `mix.exs`.
+- Tests cover the lifecycle (start, info, stop, invalid-size rejection,
+  bogus-bundle-path init failure), `run/3` (happy path, concurrent N-task,
+  callback-raise propagation, exit-reason discrimination, checkout timeout,
+  long-lived JS state across runs), worker callback unit, and crash
+  recovery (kill → replace → subsequent run succeeds).
+
 #### Task 4: `CcxtOcx.Error`
 **Completed** | [D:4/B:7/U:6 → Eff:1.62]
 

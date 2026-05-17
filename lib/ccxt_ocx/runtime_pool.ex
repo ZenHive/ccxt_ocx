@@ -29,11 +29,15 @@ defmodule CcxtOcx.RuntimePool do
 
   ## Crash semantics
 
-  NimblePool monitors each worker. A worker death is caught, the dead
-  worker is replaced by `init_worker/1` (which spawns a new
-  `CcxtOcx.Runtime` and re-loads the bundle), and the pool keeps serving.
-  Bundle-reload cost is paid on crash, not per call. The wrapper GenServer
-  is supervised by the top-level OTP supervision tree.
+  NimblePool monitors checked-out workers and async-init workers, not idle
+  ones sitting in the resource queue. A dead idle worker is therefore
+  caught lazily: `handle_checkout/4` checks `Process.alive?/1` and returns
+  `{:remove, :dead_worker, _}` if the runtime exited while idle. NimblePool
+  then re-runs `init_worker/1`, which spawns a fresh `CcxtOcx.Runtime` and
+  re-loads the bundle. A worker that dies *while checked out* is detected
+  via the client-side monitor and replaced the same way. Bundle-reload
+  cost is paid on death, not per call. The wrapper GenServer itself is
+  supervised by the top-level OTP supervision tree.
   """
 
   use GenServer
@@ -288,6 +292,10 @@ defmodule CcxtOcx.RuntimePool do
   defp expected_shutdown_reason?(:normal), do: true
   defp expected_shutdown_reason?(:shutdown), do: true
   defp expected_shutdown_reason?({:shutdown, _reason}), do: true
+  # TOCTOU: pool can die between `pool_pid/1`'s alive-check and `Process.monitor/1`.
+  # Treat :noproc as a successful stop — caller asked us to stop a pid that's
+  # now gone, which is the post-condition.
+  defp expected_shutdown_reason?(:noproc), do: true
   defp expected_shutdown_reason?(_reason), do: false
 
   # Boots one runtime synchronously to surface structured init errors

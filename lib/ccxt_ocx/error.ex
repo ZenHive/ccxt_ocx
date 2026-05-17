@@ -68,12 +68,13 @@ defmodule CcxtOcx.Error do
 
   The module declares:
 
-      @external_resource "ccxt/js/src/base/errors.d.ts"
+      @external_resource "node_modules/ccxt/js/src/base/errors.d.ts"
 
-  When that file is present at compile time (the full CCXT source tree used by
-  OXC and future macro generators), a check runs that enumerates every concrete
-  exported `export class XxxError` and asserts that `@ccxt_to_tag` contains an
-  entry for it. Missing mappings cause compilation to fail with a clear message.
+  When that file is present at compile time (the npm-installed CCXT package
+  used by OXC and future macro generators), a check runs that enumerates every
+  concrete `declare class Foo extends Bar` entry and asserts that
+  `@ccxt_to_tag` contains a mapping for it. Missing mappings cause compilation
+  to fail with a clear message.
 
   This gate is active from day one so that adding support for a new CCXT error
   subclass is a deliberate, visible change rather than a silent fallback to
@@ -310,9 +311,16 @@ defmodule CcxtOcx.Error do
   def from_js_error(raw, opts \\ [])
 
   def from_js_error(%QuickBEAM.JSError{name: name} = js_err, opts) do
-    tag = tag_for_ccxt_class(name)
+    # QuickBEAM.JSError's @type pins `name: String.t()` and its from_js_value/1
+    # constructor force-coerces via to_string/1, so name should always be a
+    # binary in practice. Coerce defensively anyway so a misuse-built struct
+    # (e.g. `%QuickBEAM.JSError{name: :foo}` bypassing the constructor) lands
+    # on :unknown instead of raising FunctionClauseError — same defensive shape
+    # as the map clause below.
+    safe_name = if is_binary(name), do: name, else: "Error"
+    tag = tag_for_ccxt_class(safe_name)
 
-    build_struct(tag, :js, name, raw: js_err, opts: opts)
+    build_struct(tag, :js, safe_name, raw: js_err, opts: opts)
   end
 
   def from_js_error(%{} = raw, opts) when is_map(raw) do

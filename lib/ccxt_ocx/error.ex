@@ -117,7 +117,7 @@ defmodule CcxtOcx.Error do
           source_name: String.t(),
           exchange: atom() | nil,
           method: String.t() | nil,
-          original: map() | nil,
+          original: term() | nil,
           meta: map()
         }
 
@@ -183,6 +183,7 @@ defmodule CcxtOcx.Error do
     # Operational / exchange-level
     "NotSupported" => :exchange,
     "ExchangeClosed" => :exchange,
+    "ExchangeClosedByUser" => :exchange,
     "OnMaintenance" => :exchange,
     "FailedRequest" => :exchange,
     "OperationRejected" => :exchange,
@@ -191,7 +192,15 @@ defmodule CcxtOcx.Error do
     "InvalidNonce" => :exchange,
     "MarginModeAlreadySet" => :exchange,
     "MarketClosed" => :exchange,
+    "ManualInteractionNeeded" => :exchange,
     "NoChange" => :exchange,
+    "ContractUnavailable" => :exchange,
+    "ChecksumError" => :exchange,
+    "UnsubscribeError" => :exchange,
+
+    # Geo / account restriction (permission family per the moduledoc)
+    "AccountNotEnabled" => :permission,
+    "RestrictedLocation" => :permission,
 
     # Network / transport
     "RequestTimeout" => :timeout,
@@ -223,20 +232,22 @@ defmodule CcxtOcx.Error do
   # Compile-time drift gate
   # ------------------------------------------------------------------
 
-  @external_resource "ccxt/js/src/base/errors.d.ts"
+  @errors_dts_path "node_modules/ccxt/js/src/base/errors.d.ts"
+  @external_resource @errors_dts_path
 
-  # When the real CCXT TypeScript definitions are present (the checkout used by
-  # OXC and future macro generators), we enumerate every concrete exported
-  # error class and demand an explicit mapping. This is the "from day one"
-  # guarantee that the taxonomy stays in sync with upstream.
-  errors_dts = "ccxt/js/src/base/errors.d.ts"
+  # CCXT's .d.ts uses `declare class Foo extends Bar`; the public export list at
+  # the bottom of the file is a single `export { ... }` block, so matching
+  # `declare class` + `extends` captures every concrete subclass (and excludes
+  # generated artifacts like `_default`). Single-sourced here so the
+  # compile-time gate below and the test-callable `parse_ccxt_classes/1` use
+  # the exact same pattern.
+  @class_regex ~r/declare\s+class\s+(\w+)\s+extends\b/
 
-  if File.exists?(errors_dts) do
-    content = File.read!(errors_dts)
+  if File.exists?(@errors_dts_path) do
+    content = File.read!(@errors_dts_path)
 
-    # Match `export class FooError` (the concrete ones; bases are also fine)
     classes =
-      ~r/export\s+class\s+(\w+Error)\b/
+      @class_regex
       |> Regex.scan(content)
       |> Enum.map(fn [_, name] -> name end)
       |> Enum.uniq()
@@ -259,6 +270,24 @@ defmodule CcxtOcx.Error do
     end
   end
 
+  @doc false
+  # Test-callable shim over the same regex the compile-time gate uses.
+  # Lets tests assert the parser detects unmapped classes against synthetic
+  # fixtures without having to corrupt the real errors.d.ts on disk.
+  @spec parse_ccxt_classes(String.t()) :: [String.t()]
+  def parse_ccxt_classes(content) when is_binary(content) do
+    @class_regex
+    |> Regex.scan(content)
+    |> Enum.map(fn [_, name] -> name end)
+    |> Enum.uniq()
+  end
+
+  @doc false
+  # Test-callable accessor for @ccxt_to_tag. The gate's drift check compares
+  # parser output against this map's keys; tests need the same view.
+  @spec ccxt_to_tag_for_test() :: %{String.t() => tag()}
+  def ccxt_to_tag_for_test, do: @ccxt_to_tag
+
   # ------------------------------------------------------------------
   # Construction helpers
   # ------------------------------------------------------------------
@@ -277,7 +306,7 @@ defmodule CcxtOcx.Error do
   Use this when you already know you have a JS error and just want the
   struct. Most wrapper code should call `normalize/2` instead.
   """
-  @spec from_js_error(QuickBEAM.JSError.t() | map(), keyword()) :: t()
+  @spec from_js_error(QuickBEAM.JSError.t() | map() | term(), keyword()) :: t()
   def from_js_error(raw, opts \\ [])
 
   def from_js_error(%QuickBEAM.JSError{name: name} = js_err, opts) do
@@ -287,7 +316,15 @@ defmodule CcxtOcx.Error do
   end
 
   def from_js_error(%{} = raw, opts) when is_map(raw) do
-    name = Map.get(raw, "name") || Map.get(raw, :name) || "Error"
+    name =
+      case Map.get(raw, "name") || Map.get(raw, :name) do
+        n when is_binary(n) -> n
+        # Non-binary (atom, number, list, …) or nil — fall back to the
+        # synthetic "Error" sentinel so tag_for_ccxt_class/1 returns :unknown
+        # instead of raising FunctionClauseError on its is_binary guard.
+        _ -> "Error"
+      end
+
     tag = tag_for_ccxt_class(name)
 
     build_struct(tag, :js, name, raw: raw, opts: opts)
@@ -321,7 +358,7 @@ defmodule CcxtOcx.Error do
       normalize(%{"name" => "RateLimitExceeded", ...}, exchange: :binance)
       normalize(%CcxtOcx.Error{...}, method: "fetchBalance")  # adds context
   """
-  @spec normalize(atom() | String.t() | map() | t(), keyword()) :: t()
+  @spec normalize(atom() | String.t() | map() | t() | term(), keyword()) :: t()
   def normalize(raw_or_tag, opts \\ [])
 
   # Already an Error struct — just merge context

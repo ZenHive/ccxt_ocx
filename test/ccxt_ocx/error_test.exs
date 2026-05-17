@@ -150,6 +150,171 @@ defmodule CcxtOcx.ErrorTest do
     end
   end
 
+  describe "parse_ccxt_classes/1 (compile-time gate logic)" do
+    test "extracts every concrete `declare class Foo extends Bar` name" do
+      content = """
+      declare class BaseError extends Error {
+          constructor(message: string);
+      }
+      declare class BadSymbol extends BadRequest {
+          constructor(message: string);
+      }
+      declare class RateLimitExceeded extends NetworkError {
+          constructor(message: string);
+      }
+      """
+
+      classes = E.parse_ccxt_classes(content)
+
+      assert "BaseError" in classes
+      assert "BadSymbol" in classes
+      assert "RateLimitExceeded" in classes
+    end
+
+    test "ignores `_default` and other non-`extends` declarations" do
+      content = """
+      declare class BadSymbol extends BadRequest {
+          constructor(message: string);
+      }
+      declare const _default: {
+          BadSymbol: typeof BadSymbol;
+      };
+      """
+
+      assert E.parse_ccxt_classes(content) == ["BadSymbol"]
+    end
+
+    test "detects unmapped classes (proves the gate would fire on drift)" do
+      content = """
+      declare class BadSymbol extends BadRequest {
+          constructor(message: string);
+      }
+      declare class BrandNewError extends ExchangeError {
+          constructor(message: string);
+      }
+      """
+
+      missing = E.parse_ccxt_classes(content) -- Map.keys(E.ccxt_to_tag_for_test())
+
+      assert "BrandNewError" in missing
+      refute "BadSymbol" in missing
+    end
+
+    test "every class in the real errors.d.ts is mapped in @ccxt_to_tag" do
+      path = "node_modules/ccxt/js/src/base/errors.d.ts"
+
+      # If the bundle isn't installed (CI without `npm install`), skip rather
+      # than flunk — setup_all at the top of this module already enforces the
+      # `ccxt.browser.min.js` presence check for the integration tests below.
+      if File.exists?(path) do
+        classes = E.parse_ccxt_classes(File.read!(path))
+        missing = classes -- Map.keys(E.ccxt_to_tag_for_test())
+
+        assert missing == [],
+               """
+               These CCXT error classes are declared upstream but missing from
+               @ccxt_to_tag. The compile-time gate should have caught this:
+
+                   #{inspect(missing)}
+               """
+      end
+    end
+  end
+
+  describe "from_js_error/2 defensive coercion" do
+    test "non-binary `:name` (atom) does not crash — normalizes to :unknown" do
+      raw = %{"name" => :rate_limit_exceeded, "message" => "weird shape"}
+
+      err = E.from_js_error(raw)
+
+      assert err.tag == :unknown
+      assert err.source_name == "Error"
+      assert err.original == raw
+    end
+
+    test "non-binary `:name` (integer) does not crash — normalizes to :unknown" do
+      raw = %{"name" => 42, "message" => "very weird shape"}
+
+      err = E.from_js_error(raw)
+
+      assert err.tag == :unknown
+      assert err.source_name == "Error"
+    end
+
+    test "missing `:name` entirely falls back to \"Error\"" do
+      raw = %{"message" => "no name field"}
+
+      err = E.from_js_error(raw)
+
+      assert err.tag == :unknown
+      assert err.source_name == "Error"
+    end
+
+    test "from_js_error/2 with a non-map/non-JSError term (last-resort fallback)" do
+      err = E.from_js_error("just a string", exchange: :binance)
+
+      assert err.tag == :unknown
+      assert err.source == :js
+      assert err.source_name == "Error"
+      assert err.original == "just a string"
+      assert err.exchange == :binance
+    end
+  end
+
+  describe "normalize/2 fallback paths" do
+    test "arbitrary string not in @ccxt_to_tag and not ending in \"Error\" goes to original" do
+      err = E.normalize("totally arbitrary payload")
+
+      assert err.tag == :unknown
+      assert err.source_name == "Error"
+      assert err.original == "totally arbitrary payload"
+    end
+
+    test "string ending in \"Error\" but not in @ccxt_to_tag treated as CCXT class" do
+      err = E.normalize("SomeFutureMadeUpError")
+
+      assert err.tag == :unknown
+      assert err.source_name == "SomeFutureMadeUpError"
+      # Treated as a class name — original stays nil
+      assert err.original == nil
+    end
+
+    test "non-supported term (atom not in @tags) falls through to last-resort" do
+      err = E.normalize(:not_a_canonical_tag, exchange: :binance)
+
+      assert err.tag == :unknown
+      assert err.source == :js
+      assert err.original == :not_a_canonical_tag
+      assert err.exchange == :binance
+    end
+  end
+
+  describe "Exception protocol callbacks" do
+    test "Exception.exception/1 routes through normalize/1" do
+      # The `Exception` behaviour's exception/1 is called by `raise/1` when
+      # given a non-struct term.
+      err = E.exception(:rate_limit)
+
+      assert err.tag == :rate_limit
+      assert err.source_name == "tag:rate_limit"
+    end
+
+    test "message/1 renders the exchange-only context shape" do
+      err = E.normalize(:auth, exchange: :binance)
+      assert Exception.message(err) == "[auth] js:tag:auth (binance)"
+    end
+
+    test "message/1 renders the method-only context shape" do
+      err = E.normalize(:auth, method: "createOrder")
+      assert Exception.message(err) == "[auth] js:tag:auth (createOrder)"
+    end
+
+    test "message/1 renders the no-context shape" do
+      err = E.normalize(:auth)
+      assert Exception.message(err) == "[auth] js:tag:auth"
+    end
+  end
+
   describe "real CCXT JS errors via QuickBEAM runtime" do
     setup do
       {:ok, server} = Runtime.start_link([])

@@ -132,6 +132,7 @@
       "eff": 1.5,
       "markers": [],
       "depends_on": [],
+      "branch": "feat/task-3-runtime-pool",
       "acceptance_criteria": [
         "Benchmark or integration test demonstrates whether a checkout re-evaluates the CCXT bundle for the chosen strategy",
         "Pool is supervised under the application and can execute concurrent CCXT eval/call work",
@@ -146,7 +147,7 @@
       "id": "4",
       "phase": 1,
       "bundle": "foundation",
-      "status": "pending",
+      "status": "done",
       "title": "`CcxtOcx.Error` — canonical error taxonomy + JS adapter mapping",
       "scores": {
         "d": 4,
@@ -156,7 +157,7 @@
       "eff": 1.63,
       "markers": [],
       "depends_on": [],
-      "body": "Define the public error contract once, owned by the wrapper, not by any adapter. `CcxtOcx.Error` enumerates the canonical tags (`:bad_symbol`, `:network`, `:rate_limit`, `:auth`, `:insufficient_funds`, `:invalid_order`, `:order_not_found`, `:exchange_not_available`, `:unknown`); every wrapper returns `{:error, tag, %CcxtOcx.Error{...}}` regardless of which adapter handled the call. **JS adapter responsibility:** map CCXT's error class names (`%QuickBEAM.JS.Error{name: \"BadSymbol\" | \"NetworkError\" | \"RateLimitExceeded\" | ...}`) to canonical tags — small stable table, since CCXT's maintainers own the venue-code → CCXT-class mapping upstream. **Native adapters (Phase 7) responsibility:** carry their own full venue-code → canonical-tag tables; no upstream maintainer doing it for them. Task 5b's bundle-bump pipeline catches new CCXT error classes we haven't mapped (assertion: zero `:unknown` tags in the smoke suite). Task N3's conformance harness catches when CCXT-class drift means the native adapter's venue-code table is stale (see N3). The taxonomy itself is the contract — adapters translate into it; consumers never see adapter-specific shapes.\n\n**Macro-generated JS mapping (refinement):** the CCXT-class → canonical-tag table for the JS adapter can be macro-generated rather than hand-curated. At compile time, walk CCXT's error-class hierarchy — either via OXC parse of `node_modules/ccxt/js/src/base/errors.js`, or via runtime introspection during the same compile-time bundle boot Task 9 already performs — and emit the case statement. Bundle bumps that add a new error class fail compile with \"unmapped: NewErrorName\", catching drift mechanically rather than via the smoke-suite zero-`:unknown` assertion. Cross-reference Task 5b: the error-class diff joins the unified-method-list and per-exchange `has`-table diff already there.\n",
+      "body": "Define the public error contract once. Delivered: closed 9-tag taxonomy (`:bad_symbol | :network | :rate_limit | :auth | :not_found | :permission | :exchange | :timeout | :unknown`), `%CcxtOcx.Error{}` struct with `:source` / `:source_name` discriminator (future-proofs Phase 7 native adapters), three-function API (`tag_for_ccxt_class/1` pure, `from_js_error/2`, `normalize/2` with `[:exchange, :method, :original, :meta]` opts for context injection), and a compile-time drift gate using `@external_resource \"ccxt/js/src/base/errors.d.ts\"` + exhaustive check of exported CCXT error classes.\n\nJS path (QuickBEAM): raw `%{name: \"BadSymbol\", ...}` or `%QuickBEAM.JSError{}` → normalized struct with `source: :js`, `source_name: \"BadSymbol\"`. Wrappers call `normalize(raw, exchange: :binance, method: \"createOrder\")`.\n\nNative adapters (Phase 7): will supply `source: :binance`, `source_name: venue_code`. Consumers match on `:tag`; provenance lives in the two discriminator fields.\n\nThe gate fails compilation when a new CCXT subclass appears in the .d.ts and lacks a mapping. Real QuickBEAM tests exercise actual CCXT error constructors (BadSymbol, RateLimitExceeded, AuthenticationError, ...).\n",
       "scored_at": "2026-05-16",
       "cross_repo": []
     },

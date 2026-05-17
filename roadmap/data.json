@@ -122,7 +122,7 @@
       "id": "3",
       "phase": 1,
       "bundle": "foundation",
-      "status": "in_progress",
+      "status": "done",
       "title": "`CcxtOcx.RuntimePool` supervisor",
       "scores": {
         "d": 5,
@@ -132,7 +132,6 @@
       "eff": 1.5,
       "markers": [],
       "depends_on": [],
-      "branch": "feat/task-3-runtime-pool",
       "acceptance_criteria": [
         "Benchmark or integration test demonstrates whether a checkout re-evaluates the CCXT bundle for the chosen strategy",
         "Pool is supervised under the application and can execute concurrent CCXT eval/call work",

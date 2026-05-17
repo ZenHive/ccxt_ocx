@@ -47,6 +47,13 @@ defmodule CcxtOcx.Runtime do
       "node_modules/ccxt/dist/ccxt.browser.min.js"
 
   Relative paths resolve against `File.cwd!/0`.
+
+  ## Telemetry
+
+  This module emits `[:ccxt_ocx, :runtime, :memory]` (via `memory/1` and once
+  at the end of successful `init/1`). See `CcxtOcx.Telemetry` for the full
+  contract, measurement shape, and handler examples. The raw numbers are also
+  available from `memory_usage/1` (no event).
   """
 
   use GenServer
@@ -138,6 +145,36 @@ defmodule CcxtOcx.Runtime do
   @spec info(GenServer.server()) :: info()
   def info(server), do: GenServer.call(server, :info)
 
+  @doc """
+  Return QuickJS memory usage statistics for the underlying runtime.
+
+  This is the raw measurement (no telemetry side-effect). Keys include
+  `malloc_size`, `memory_used_size`, `obj_count`, and the other fields
+  documented by QuickBEAM / QuickJS `JS_ComputeMemoryUsage`.
+
+  Use `memory/1` when you also want the `[:ccxt_ocx, :runtime, :memory]`
+  event emitted.
+  """
+  @spec memory_usage(GenServer.server()) :: map()
+  def memory_usage(server), do: QuickBEAM.memory_usage(rt(server))
+
+  @doc """
+  Return QuickJS memory usage statistics **and** emit the canonical
+  `[:ccxt_ocx, :runtime, :memory]` telemetry event.
+
+  The returned map is the same as `memory_usage/1`. The event is emitted
+  via `CcxtOcx.Telemetry` so handlers attached to the public name receive it
+  with `%{server: pid()}` metadata.
+
+  This is the function Task 15's memory monitor and user dashboards will call.
+  """
+  @spec memory(GenServer.server()) :: map()
+  def memory(server) do
+    measurements = memory_usage(server)
+    CcxtOcx.Telemetry.execute([:runtime, :memory], measurements, %{server: server})
+    measurements
+  end
+
   ## Callbacks
 
   @impl true
@@ -163,6 +200,11 @@ defmodule CcxtOcx.Runtime do
         ccxt_version: version,
         exchange_count: count
       }
+
+      # Baseline memory snapshot right after bundle load (cheap, gives
+      # dashboards an initial data point before any user calls).
+      measurements = QuickBEAM.memory_usage(rt)
+      CcxtOcx.Telemetry.execute([:runtime, :memory], measurements, %{server: self(), phase: :init})
 
       {:ok, state}
     else
@@ -193,7 +235,18 @@ defmodule CcxtOcx.Runtime do
   @impl true
   @spec terminate(term(), map()) :: :ok
   def terminate(_reason, %{rt: rt}) when is_pid(rt) do
-    if Process.alive?(rt), do: QuickBEAM.stop(rt)
+    if Process.alive?(rt) do
+      # Final memory snapshot (best-effort; ignore failures on shutdown).
+      try do
+        measurements = QuickBEAM.memory_usage(rt)
+        CcxtOcx.Telemetry.execute([:runtime, :memory], measurements, %{server: self(), phase: :terminate})
+      catch
+        _, _ -> :ok
+      end
+
+      QuickBEAM.stop(rt)
+    end
+
     :ok
   end
 

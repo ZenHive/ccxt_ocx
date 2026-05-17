@@ -530,7 +530,7 @@
       "id": "14",
       "phase": 5,
       "bundle": "production",
-      "status": "pending",
+      "status": "done",
       "title": "Telemetry events",
       "scores": {
         "d": 3,
@@ -541,6 +541,8 @@
       "markers": [],
       "depends_on": [],
       "body": "`[:ccxt_ocx, :rest, :start | :stop | :exception]`, `[:ccxt_ocx, :ws, :tick]`, `[:ccxt_ocx, :runtime, :memory]`. Standard `:telemetry` shape so downstream metrics stacks (Prometheus, Datadog) plug in with no glue.\n",
+      "started_at": "2026-05-17",
+      "done_at": "2026-05-17",
       "scored_at": "2026-05-16",
       "cross_repo": []
     },

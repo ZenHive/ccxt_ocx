@@ -244,4 +244,29 @@ defmodule CcxtOcx.RuntimePoolTest do
                )
     end
   end
+
+  describe "telemetry (Task 14)" do
+    test "memory/1 samples a worker, returns measurements, and emits with pool in meta", %{shared: pool} do
+      handler_id = make_ref()
+      test_pid = self()
+
+      :telemetry.attach(
+        handler_id,
+        [:ccxt_ocx, :runtime, :memory],
+        fn event, meas, meta, _config ->
+          send(test_pid, {:telemetry_pool, event, meas, meta})
+        end,
+        %{}
+      )
+
+      on_exit(fn -> :telemetry.detach(handler_id) end)
+
+      measurements = CcxtOcx.RuntimePool.memory(pool)
+
+      assert is_map(measurements)
+      assert Map.has_key?(measurements, :malloc_size)
+
+      assert_receive {:telemetry_pool, [:ccxt_ocx, :runtime, :memory], ^measurements, %{pool: ^pool}}, 2_000
+    end
+  end
 end

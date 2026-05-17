@@ -45,7 +45,7 @@ defmodule CcxtOcx.MixProject do
       {:nimble_pool, "~> 1.1"},
 
       # Observability (Task 14 — telemetry events + future memory monitor)
-      {:telemetry, "~> 1.0"},
+      {:telemetry, "~> 1.3"},
 
       # JSON
       {:jason, "~> 1.4.5"},

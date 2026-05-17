@@ -195,6 +195,32 @@ defmodule CcxtOcx.RuntimeTest do
       assert_receive {:telemetry, [:ccxt_ocx, :runtime, :memory], ^measurements, %{server: ^server}}, 1_000
     end
 
+    test "memory/1 emits pid metadata for named runtimes" do
+      handler_id = make_ref()
+      test_pid = self()
+      name = :"runtime_#{System.unique_integer([:positive])}"
+
+      {:ok, server} = CcxtOcx.Runtime.start_link(name: name)
+
+      :telemetry.attach(
+        handler_id,
+        [:ccxt_ocx, :runtime, :memory],
+        fn event, meas, meta, _config ->
+          send(test_pid, {:telemetry, event, meas, meta})
+        end,
+        %{}
+      )
+
+      on_exit(fn ->
+        :telemetry.detach(handler_id)
+        if Process.alive?(server), do: CcxtOcx.Runtime.stop(server)
+      end)
+
+      measurements = CcxtOcx.Runtime.memory(name)
+
+      assert_receive {:telemetry, [:ccxt_ocx, :runtime, :memory], ^measurements, %{server: ^server}}, 1_000
+    end
+
     test "baseline memory event is emitted during init", _context do
       handler_id = make_ref()
       test_pid = self()

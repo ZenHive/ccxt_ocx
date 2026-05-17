@@ -76,22 +76,33 @@ defmodule CcxtOcx.Telemetry do
   Wraps `:telemetry.span/3` under the CcxtOcx prefix.
 
   Supports the convenient "return bare result" style (most common in our
-  future macro call sites) as well as the full `{result, stop_meta}` and
-  `{result, extra_meas, stop_meta}` forms that the underlying telemetry
-  library requires.
+  future macro call sites). When callers need custom stop metadata or
+  measurements, return an explicitly tagged tuple:
+
+      {:telemetry_span, result, stop_meta}
+      {:telemetry_span, result, extra_meas, stop_meta}
 
   Callers pass only the suffix:
 
-      CcxtOcx.Telemetry.span([:rest, :request], meta, fn -> do_work() end)
+      CcxtOcx.Telemetry.span([:rest], meta, fn -> do_work() end)
   """
-  @spec span([atom()], :telemetry.event_metadata(), (-> result | {result, map()} | {result, map(), map()})) :: result
+  @spec span(
+          [atom()],
+          :telemetry.event_metadata(),
+          (-> result | {:telemetry_span, result, map()} | {:telemetry_span, result, map(), map()})
+        ) :: result
         when result: var
   def span(suffix, meta, fun) when is_list(suffix) and is_function(fun, 0) do
     wrapped = fn ->
       case fun.() do
-        {result, stop_meta} when is_map(stop_meta) -> {result, stop_meta}
-        {result, extra, stop_meta} when is_map(extra) and is_map(stop_meta) -> {result, extra, stop_meta}
-        result -> {result, %{}}
+        {:telemetry_span, result, stop_meta} when is_map(stop_meta) ->
+          {result, stop_meta}
+
+        {:telemetry_span, result, extra, stop_meta} when is_map(extra) and is_map(stop_meta) ->
+          {result, extra, stop_meta}
+
+        result ->
+          {result, %{}}
       end
     end
 

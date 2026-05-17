@@ -171,7 +171,8 @@ defmodule CcxtOcx.Runtime do
   @spec memory(GenServer.server()) :: map()
   def memory(server) do
     measurements = memory_usage(server)
-    CcxtOcx.Telemetry.execute([:runtime, :memory], measurements, %{server: server})
+    server_pid = GenServer.whereis(server) || server
+    CcxtOcx.Telemetry.execute([:runtime, :memory], measurements, %{server: server_pid})
     measurements
   end
 

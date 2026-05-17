@@ -44,7 +44,7 @@ defmodule CcxtOcx.TelemetryTest do
       result =
         Telemetry.span([:test, :span], %{op: "demo"}, fn ->
           send(test_pid, :inside_span)
-          {:ok, %{op: "demo"}}
+          {:telemetry_span, :ok, %{op: "demo"}}
         end)
 
       assert result == :ok
@@ -53,7 +53,7 @@ defmodule CcxtOcx.TelemetryTest do
       assert_receive {:saw, [:ccxt_ocx, :test, :span, :stop], %{duration: _}, %{op: "demo"}}
     end
 
-    test "span wrapper normalizes bare result, 2-tuple, and 3-tuple returns from user fun" do
+    test "span wrapper normalizes bare result and tagged metadata returns from user fun" do
       handler = make_ref()
       test_pid = self()
 
@@ -72,14 +72,26 @@ defmodule CcxtOcx.TelemetryTest do
       # bare result
       assert :bare == Telemetry.span([:norm, :bare], %{}, fn -> :bare end)
 
-      # 2-tuple {result, stop_meta}
-      assert :two == Telemetry.span([:norm, :two], %{}, fn -> {:two, %{custom: 1}} end)
+      # tagged stop metadata
+      assert :two == Telemetry.span([:norm, :two], %{}, fn -> {:telemetry_span, :two, %{custom: 1}} end)
 
-      # 3-tuple {result, extra_meas, stop_meta}
-      assert :three == Telemetry.span([:norm, :three], %{}, fn -> {:three, %{extra: true}, %{custom: 2}} end)
+      # tagged extra measurements + stop metadata
+      assert :three ==
+               Telemetry.span([:norm, :three], %{}, fn ->
+                 {:telemetry_span, :three, %{extra: true}, %{custom: 2}}
+               end)
 
       # We don't assert the exact events here (to keep the test tiny), just that the wrapper didn't crash on any form.
       # The previous test already proves emission works.
+    end
+
+    test "span wrapper preserves bare tuple results whose second element is a map" do
+      result =
+        Telemetry.span([:norm, :tuple_result], %{}, fn ->
+          {:ok, %{response: "payload"}}
+        end)
+
+      assert {:ok, %{response: "payload"}} = result
     end
   end
 end

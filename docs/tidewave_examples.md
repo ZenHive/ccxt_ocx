@@ -141,7 +141,7 @@ This kind of exploration is extremely valuable before writing `defunified` suppo
 ```elixir
 # One-shot
 CcxtOcx.Runtime.memory(:rt)          # emits [:ccxt_ocx, :runtime, :memory]
-CcxtOcx.Runtime.memory_usage(:rt)    # raw numbers only
+CcxtOcx.Runtime.memory_usage(:rt)    # same map, no telemetry side-effect
 
 # Watch live while driving load from Tidewave
 :telemetry.attach("watch", [:ccxt_ocx, :runtime, :memory], fn event, meas, meta, _ ->
@@ -164,11 +164,16 @@ This combination (live runtime + static docs + source location) is extremely pow
 
 ## Error Handling & Resilience
 
+`CcxtOcx.Runtime.call/4` always returns `{:ok, result}` or `{:error, reason}` — it does not raise. Pattern-match the tuple to handle failures:
+
 ```elixir
-try do
-  CcxtOcx.Runtime.call(:rt, "getTicker", ["deribit", "NONEXISTENT"])
-rescue
-  e -> {:error, Exception.message(e)}
+case CcxtOcx.Runtime.call(:rt, "getTicker", ["deribit", "NONEXISTENT"]) do
+  {:ok, ticker} ->
+    ticker
+
+  {:error, %QuickBEAM.JSError{name: name, message: msg}} ->
+    # e.g. name "BadSymbol", msg "deribit does not have market symbol NONEXISTENT"
+    {:error, name, msg}
 end
 ```
 

@@ -6,6 +6,20 @@ All notable changes to `ccxt_ocx` are recorded here. The format follows
 
 ## [Unreleased]
 
+### Phase 2: Macro-Driven Method Generation
+
+#### Task 6: Discover and parse CCXT declaration sources (`CcxtOcx.Declarations`)
+**Completed** | [D:6/B:8/U:8 → Eff:1.33] 📋
+
+Compile-time parser that turns CCXT's real TypeScript declarations into rich
+per-method terms (name, params, return type, owning surface, overrides) for
+the Phase 2 macro layer to consume.
+
+- New `CcxtOcx.Declarations` facade + `CcxtOcx.Declarations.Compile` parser — walks `js/src/base/Exchange.d.ts`, the per-exchange `*.d.ts`, and `pro/*.d.ts` with `OXC.parse/2` + `OXC.collect/2`, classifying methods by `:base`, `:exchange`, or `:pro` surface and capturing per-exchange overrides.
+- Filter ownership (verb-prefix allowlist, internal-prefix denylist, exact-name denylist, bare-name trade-plane allowlist) centralized here. `CcxtOcx.BundleSurface.Compile` now delegates to `Declarations.Compile.public_unified_method?/1` so the "what gets a `defunified` wrapper" decision lives in one place.
+- Overrides map keyed by `"surface:exchange_id"` so a method declared in both `js/src/<id>.d.ts` and `js/src/pro/<id>.d.ts` (e.g. `kucoinfutures.fetchBidsAsks`) keeps both override entries.
+- Loud layout guard raises with actionable instructions if CCXT bumps and the three smoke methods (`fetchTicker`, `createOrder`, `watchTicker`) disappear from the base surface.
+
 ### Phase 5: Production Hardening
 
 #### Task 21: PromEx plugin (`CcxtOcx.PromEx.Plugin`)

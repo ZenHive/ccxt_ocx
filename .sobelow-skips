@@ -6,3 +6,7 @@ Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/bundle_su
 Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/ccxt_ocx/bundle_surface/manifest.ex:51,623409F
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/bundle_surface/compile.ex:165,69BB3C4
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/tiers/compile.ex:68,7844D5D
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/bundle_surface/compile.ex:127,3D28FF5
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/declarations/compile.ex:175,6A320B6
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/bundle_surface/compile.ex:83,7F523E6
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/declarations/compile.ex:180,2BFD6B

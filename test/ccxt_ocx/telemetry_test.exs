@@ -58,9 +58,12 @@ defmodule CcxtOcx.TelemetryTest do
       test_pid = self()
 
       events = [
-        [:ccxt_ocx, :norm, :bare, :start], [:ccxt_ocx, :norm, :bare, :stop],
-        [:ccxt_ocx, :norm, :two, :start],  [:ccxt_ocx, :norm, :two, :stop],
-        [:ccxt_ocx, :norm, :three, :start],[:ccxt_ocx, :norm, :three, :stop]
+        [:ccxt_ocx, :norm, :bare, :start],
+        [:ccxt_ocx, :norm, :bare, :stop],
+        [:ccxt_ocx, :norm, :two, :start],
+        [:ccxt_ocx, :norm, :two, :stop],
+        [:ccxt_ocx, :norm, :three, :start],
+        [:ccxt_ocx, :norm, :three, :stop]
       ]
 
       :telemetry.attach_many(handler, events, fn e, m, meta, _ -> send(test_pid, {:norm, e, m, meta}) end, %{})

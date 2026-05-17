@@ -36,7 +36,7 @@ defmodule CcxtOcx.Telemetry do
       [:ccxt_ocx, :runtime, :memory]
 
   On-demand (and baseline) snapshot of QuickJS memory usage for a given runtime.
-  See `runtime_memory/2` and `CcxtOcx.Runtime.memory/1`.
+  See `CcxtOcx.Runtime.memory/1` (raw numbers also available from `memory_usage/1`).
 
   ## Usage
 

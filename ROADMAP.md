@@ -50,7 +50,7 @@
 | Task | Status | Notes |
 |------|--------|-------|
 | Task 6 | ✅ | 🎁 **macros** · 🚀 **v0_1** · Discover and parse CCXT declaration sources with OXC [D:6/B:8/U:8 → Eff:1.33] 📋 |
-| Task 6b | ⬜ | 🎁 **macros** · 🚀 **v0_1** · `use CcxtOcx` — exchange-scope entrypoint [D:5/B:9/U:9 → Eff:1.8] 🚀 |
+| Task 6b | ✅ | 🎁 **macros** · 🚀 **v0_1** · `use CcxtOcx` — exchange-scope entrypoint [D:5/B:9/U:9 → Eff:1.8] 🚀 |
 | Task 7 | ⬜ | 🎁 **macros** · 🚀 **v0_1** · `defunified` macro [D:7/B:10/U:9 → Eff:1.36] 📋 |
 | Task 8 | ⬜ | 🎁 **macros** · 🚀 **v0_1** · Typed structs for unified return shapes (with declarative field mapping) [D:5/B:8/U:8 → Eff:1.6] 🚀 |
 | Task 9 | ⬜ | 🎁 **macros** · 🚀 **v0_1** · `defexchange` macro [D:6/B:7/U:6 → Eff:1.08] 📋 |

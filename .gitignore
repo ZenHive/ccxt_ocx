@@ -28,6 +28,11 @@ ccxt_ocx-*.tar
 # Hex docs cache (pulled on demand).
 /.hex-docs/
 
+# Compile-time per-exchange capability caches (populated lazily by
+# ExchangeCaps.fetch_or_build/1 when Task 9 or manual probing runs; the
+# verify-bundle Mix task will learn to refresh them on CCXT bumps).
+/priv/exchange_caps/
+
 # Dialyzer PLTs (per CLAUDE.md, kept out of _build to survive cleanup).
 /priv/plts/
 

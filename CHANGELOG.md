@@ -20,6 +20,29 @@ the Phase 2 macro layer to consume.
 - Overrides map keyed by `"surface:exchange_id"` so a method declared in both `js/src/<id>.d.ts` and `js/src/pro/<id>.d.ts` (e.g. `kucoinfutures.fetchBidsAsks`) keeps both override entries.
 - Loud layout guard raises with actionable instructions if CCXT bumps and the three smoke methods (`fetchTicker`, `createOrder`, `watchTicker`) disappear from the base surface.
 
+**Fix (shipped with Task 6b):** `exchange_id_from_path/1` previously used `Path.rootname/1`, which only strips a single extension — so `"binance.d.ts"` was parsed as `"binance.d"` instead of `"binance"`. The override-map keys (`"exchange:binance.d"`) and the `exchange_id` field on each parsed term were silently wrong. Switched to `Path.basename(p, ".d.ts")`. No consumer queried these values before Task 6b landed, so the on-disk `priv/ccxt_surface.exs` (method-name list only) was unaffected.
+
+#### Task 6b: `use CcxtOcx` — exchange-scope entrypoint
+**Completed** | [D:5/B:9/U:9 → Eff:1.8] 🚀  (v0.1)
+
+The single user-facing macro. Three supported forms gate all downstream codegen:
+
+- `use CcxtOcx, exchanges: [:binance, :deribit]`
+- `use CcxtOcx, tier: :tier1`
+- `use CcxtOcx, exchanges: :all` (loud warning)
+
+- `CcxtOcx.__using__/1` + `CcxtOcx.Macros.Use` (NimbleOptions schema, Option A "bare use → CompileError", Jaro-distance did-you-mean, tier expansion, normalization).
+- Emits real `CcxtOcx.Binance`, `CcxtOcx.Deribit`, … modules with `__exchange_id__/0` and clear handoff docs for `defunified`/`defexchange`.
+- `CcxtOcx.Macros.ExchangeCaps` introduced (probe helper + `priv/exchange_caps/<id>.exs` cache contract for Task 9; pure `known_exchange_ids/0` via Declarations).
+- 9 new tests (resolver + live emission) + all quality gates green. Macro contract stable for the rest of v0.1.
+- Post-staged-review polish (all 6 findings from commit-review addressed before landing):
+  - Mutual-exclusivity of `:exchanges` + `:tier` now enforced with clear `CompileError` + test.
+  - Removed partial `resolved_exchange_list/1` helper (inlined the only call site).
+  - `ExchangeCaps` now explicitly documented as "introduced in 6b, exercised by Task 9"; added unit test that runs the probe and materializes a cache artifact.
+  - Bare-use policy check re-ordered after `[]` so unknown-key-only calls get precise Nimble "unknown options" errors.
+  - `exchange_id_from_path/1` now returns `atom()` (consistent with public API); callers and docs updated.
+  - `caps_path/1` is now pure; `mkdir_p!` moved into the write-only path in `build_and_cache!`.
+
 ### Phase 5: Production Hardening
 
 #### Task 21: PromEx plugin (`CcxtOcx.PromEx.Plugin`)

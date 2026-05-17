@@ -208,7 +208,7 @@ defmodule CcxtOcx.Declarations.Compile do
     end
   end
 
-  @spec collect_method(map(), surface(), String.t() | nil, String.t()) ::
+  @spec collect_method(map(), surface(), atom() | nil, String.t()) ::
           {:keep, map()} | :skip
   defp collect_method(node, surface, exchange_id, path) do
     case node do
@@ -335,11 +335,34 @@ defmodule CcxtOcx.Declarations.Compile do
 
   # --- Helpers ----------------------------------------------------------------
 
-  @spec exchange_id_from_path(String.t()) :: String.t()
-  defp exchange_id_from_path(path) do
+  @doc """
+  Returns the exchange id (as atom) derived from a per-exchange .d.ts path.
+
+  Public so Task 6b's `use CcxtOcx` validator (and later Task 9) can build a
+  cheap, pure list of known CCXT exchange ids without spinning a QuickBEAM
+  runtime.
+  """
+  @spec exchange_id_from_path(String.t()) :: atom()
+  def exchange_id_from_path(path) do
+    # Path.rootname("foo.d.ts") == "foo.d" — we must strip the .d.ts suffix explicitly.
     path
     |> Path.basename()
-    |> Path.rootname()
+    |> Path.basename(".d.ts")
+    |> String.to_atom()
+  end
+
+  @doc """
+  Returns the sorted list of all known exchange ids (as atoms) derived purely
+  from the on-disk per-exchange .d.ts files.
+
+  Zero JS / zero bundle load. Used by the `use CcxtOcx` macro (Task 6b) for
+  validation + suggestions. Also useful for docs and test fixtures.
+  """
+  @spec known_exchange_ids() :: [atom()]
+  def known_exchange_ids do
+    exchange_dts_paths()
+    |> Enum.map(&exchange_id_from_path/1)
+    |> Enum.sort()
   end
 
   # --- Layout guard ------------------------------------------------------------

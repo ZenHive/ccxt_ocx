@@ -88,14 +88,16 @@ defmodule CcxtOcx.RuntimePool do
   @doc "Stop the pool. Cascades worker termination via NimblePool."
   @spec stop(pool()) :: :ok
   def stop(pool) do
-    GenServer.stop(pool, :normal, @default_stop_timeout)
-  catch
-    :exit, reason ->
-      if expected_stop_exit?(reason, pool) do
+    case pool_pid(pool) do
+      nil ->
         :ok
-      else
-        exit(reason)
-      end
+
+      pid ->
+        Process.unlink(pid)
+        ref = Process.monitor(pid)
+        GenServer.cast(pid, :stop)
+        await_stop(pid, ref)
+    end
   end
 
   @doc """
@@ -108,19 +110,9 @@ defmodule CcxtOcx.RuntimePool do
   @spec run(pool(), run_fun(result), timeout()) :: result | {:error, :checkout_timeout}
         when result: term()
   def run(pool, fun, timeout \\ @default_checkout_timeout) when is_function(fun, 1) do
-    np = GenServer.call(pool, :np, timeout)
-
-    NimblePool.checkout!(
-      np,
-      :checkout,
-      fn _from, server ->
-        {fun.(CcxtOcx.Runtime.rt(server)), :ok}
-      end,
-      timeout
-    )
-  catch
-    :exit, {:timeout, {NimblePool, :checkout, _}} -> {:error, :checkout_timeout}
-    :exit, {:timeout, {GenServer, :call, [_, :np, _]}} -> {:error, :checkout_timeout}
+    with {:ok, np} <- lookup_pool(pool, timeout) do
+      checkout(np, fun, timeout)
+    end
   end
 
   @doc "Return diagnostics about the pool."
@@ -189,6 +181,10 @@ defmodule CcxtOcx.RuntimePool do
   end
 
   @impl GenServer
+  @spec handle_cast(:stop, map()) :: {:stop, :normal, map()}
+  def handle_cast(:stop, state), do: {:stop, :normal, state}
+
+  @impl GenServer
   @spec handle_info(term(), map()) :: {:noreply, map()} | {:stop, term(), map()}
   def handle_info({:EXIT, np, reason}, %{np: np} = state) do
     # NimblePool died — can't keep serving. Supervisor restarts us, we
@@ -230,24 +226,63 @@ defmodule CcxtOcx.RuntimePool do
 
   ## Helpers
 
-  @spec expected_stop_exit?(term(), pool()) :: boolean()
-  defp expected_stop_exit?({:noproc, {GenServer, :stop, [pool, :normal, @default_stop_timeout]}}, pool) do
-    true
+  @spec pool_pid(pool()) :: pid() | nil
+  defp pool_pid(pool) when is_pid(pool) do
+    if Process.alive?(pool), do: pool
   end
 
-  defp expected_stop_exit?(
-         {{reason, {:sys, :terminate, [pool, :normal, @default_stop_timeout]}},
-          {GenServer, :stop, [pool, :normal, @default_stop_timeout]}},
-         pool
-       ) do
-    expected_shutdown_reason?(reason)
+  defp pool_pid(pool), do: GenServer.whereis(pool)
+
+  @spec lookup_pool(pool(), timeout()) :: {:ok, pid()} | {:error, :checkout_timeout}
+  defp lookup_pool(pool, timeout) do
+    {:ok, GenServer.call(pool, :np, timeout)}
+  catch
+    :exit, {:timeout, {GenServer, :call, [_, :np, _]}} -> {:error, :checkout_timeout}
   end
 
-  defp expected_stop_exit?({reason, {GenServer, :stop, [pool, :normal, @default_stop_timeout]}}, pool) do
-    expected_shutdown_reason?(reason)
+  @spec checkout(pid(), run_fun(result), timeout()) :: result | {:error, :checkout_timeout}
+        when result: term()
+  defp checkout(np, fun, timeout) do
+    NimblePool.checkout!(
+      np,
+      :checkout,
+      fn _from, server ->
+        {fun.(CcxtOcx.Runtime.rt(server)), :ok}
+      end,
+      timeout
+    )
+  catch
+    :exit, {:timeout, {NimblePool, :checkout, _}} = reason ->
+      if nimble_pool_timeout?(__STACKTRACE__) do
+        {:error, :checkout_timeout}
+      else
+        exit(reason)
+      end
   end
 
-  defp expected_stop_exit?(_reason, _pool), do: false
+  @spec nimble_pool_timeout?(Exception.stacktrace()) :: boolean()
+  defp nimble_pool_timeout?(stacktrace) do
+    Enum.any?(stacktrace, fn
+      {NimblePool, :exit!, 3, _location} -> true
+      _frame -> false
+    end)
+  end
+
+  @spec await_stop(pid(), reference()) :: :ok
+  defp await_stop(pid, ref) do
+    receive do
+      {:DOWN, ^ref, :process, ^pid, reason} ->
+        if expected_shutdown_reason?(reason) do
+          :ok
+        else
+          exit(reason)
+        end
+    after
+      @default_stop_timeout ->
+        Process.demonitor(ref, [:flush])
+        exit(:timeout)
+    end
+  end
 
   @spec expected_shutdown_reason?(term()) :: boolean()
   defp expected_shutdown_reason?(:normal), do: true

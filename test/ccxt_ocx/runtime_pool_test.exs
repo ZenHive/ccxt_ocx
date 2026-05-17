@@ -46,6 +46,14 @@ defmodule CcxtOcx.RuntimePoolTest do
       refute Process.alive?(np)
     end
 
+    test "stop/1 treats an already-stopped pid as stopped" do
+      {:ok, pool} = CcxtOcx.RuntimePool.start_link(size: 1)
+      :ok = CcxtOcx.RuntimePool.stop(pool)
+      refute Process.alive?(pool)
+
+      assert :ok = CcxtOcx.RuntimePool.stop(pool)
+    end
+
     test "start_link/1 with bogus bundle path surfaces structured init error" do
       Process.flag(:trap_exit, true)
       bogus = Path.join(System.tmp_dir!(), "ccxt-#{System.unique_integer([:positive])}.js")
@@ -123,6 +131,17 @@ defmodule CcxtOcx.RuntimePoolTest do
       reason = {:timeout, {SomethingElse, :call, []}}
 
       assert catch_exit(CcxtOcx.RuntimePool.run(pool, fn _rt -> exit(reason) end)) == reason
+    end
+
+    test "callback exits shaped like internal timeouts propagate", %{shared: pool} do
+      gen_call_reason = {:timeout, {GenServer, :call, [self(), :np, 50]}}
+      nimble_reason = {:timeout, {NimblePool, :checkout, [self()]}}
+
+      assert catch_exit(CcxtOcx.RuntimePool.run(pool, fn _rt -> exit(gen_call_reason) end)) ==
+               gen_call_reason
+
+      assert catch_exit(CcxtOcx.RuntimePool.run(pool, fn _rt -> exit(nimble_reason) end)) ==
+               nimble_reason
     end
 
     test "returns :checkout_timeout when pool is exhausted" do

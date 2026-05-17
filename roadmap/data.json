@@ -277,7 +277,9 @@
       },
       "eff": 1.8,
       "markers": [],
-      "depends_on": [],
+      "depends_on": [
+        "6"
+      ],
       "body": "The single user-facing macro that gates all per-exchange code generation. Three input modes:\n\n```elixir\nuse CcxtOcx, exchanges: [:binance, :okx, :deribit]   # explicit list\nuse CcxtOcx, tier: :tier1                             # via Task 5c Tiers\nuse CcxtOcx, exchanges: :all                          # all 100+ (heavy compile)\n```\n\nImplementation: reads scope at compile time, iterates the chosen exchange list, invokes `defunified` (Task 7) and `defexchange` (Task 9) for each. Without this gate, every consumer pays the full ~30–60s + 5–10MB beam cost. NimbleOptions validates the option keyword. Tier mode requires Task 5c.\n\n**Open question (default policy):** what does `use CcxtOcx` with *no* `exchanges:`/`tier:` do?\n- **Option A — empty + compile error:** \"declare `exchanges:` or pass `:all`\". Most explicit; surfaces the cost on day one. *Recommended.*\n- **Option B — `:all`:** matches \"100+ out of the box\" pitch but punishes the 95% case.\n- **Option C — `[:binance]`:** minimal viable; gentle ramp.\n\nPick before Task 7 lands so the macro contract is stable.\n\n[Tidewave dogfooding 2026-05-17]\n- Use Tidewave to simulate \"use CcxtOcx, exchanges: [:deribit]\" by starting only scoped runtimes and exercising complex methods (options).\n- Validate that limiting scope dramatically reduces memory/CPU vs loading all 100+.\n",
       "scored_at": "2026-05-16",
       "cross_repo": []
@@ -938,7 +940,7 @@
       "cross_repo": []
     },
     {
-      "id": 22,
+      "id": "22",
       "phase": 6,
       "bundle": "dx",
       "status": "done",

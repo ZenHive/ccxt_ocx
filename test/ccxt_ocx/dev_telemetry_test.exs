@@ -55,6 +55,19 @@ defmodule CcxtOcx.DevTelemetryTest do
       assert summary.ws_tick.count == 0
     end
 
+    test "invalid options do not detach an existing handler or reset state" do
+      :ok = DevTelemetry.watch(print: false, filter: [:runtime_memory])
+      Telemetry.execute([:runtime, :memory], %{malloc_size: 100}, %{server: self()})
+
+      assert_raise NimbleOptions.ValidationError, fn ->
+        DevTelemetry.watch(print: false, filter: [:unknown])
+      end
+
+      Telemetry.execute([:runtime, :memory], %{malloc_size: 200}, %{server: self()})
+
+      assert DevTelemetry.summary().runtime_memory.count == 2
+    end
+
     test ":io_device routes pretty-print output (captures the format string)" do
       {:ok, capture} = StringIO.open("")
       :ok = DevTelemetry.watch(print: true, io_device: capture)
@@ -84,6 +97,42 @@ defmodule CcxtOcx.DevTelemetryTest do
       {_input, output} = StringIO.contents(capture)
       assert output == ""
       assert DevTelemetry.summary().runtime_memory.count == 1
+    end
+
+    test "prints every event family format" do
+      {:ok, capture} = StringIO.open("")
+      :ok = DevTelemetry.watch(print: true, io_device: capture)
+
+      Telemetry.execute([:runtime, :memory], %{malloc_size: 999, memory_used_size: 1_250, obj_count: 1}, %{pool: :pool})
+      Telemetry.execute([:runtime, :memory], %{}, %{})
+      Telemetry.execute([:rest, :start], %{}, %{exchange: "binance", method: "ticker"})
+      Telemetry.execute([:rest, :stop], %{duration: 1_000_000}, %{exchange: "binance", method: "ticker"})
+      Telemetry.execute([:rest, :stop], %{}, %{})
+      Telemetry.execute([:rest, :exception], %{}, %{exchange: "binance", method: "ticker", kind: :error})
+      Telemetry.execute([:ws, :tick], %{}, %{exchange: "binance", stream: "trade", type: "update"})
+
+      {_input, output} = StringIO.contents(capture)
+      assert output =~ "malloc=999B"
+      assert output =~ "used=1.3K"
+      assert output =~ "pool=:pool"
+      assert output =~ "target=?"
+      assert output =~ "[rest:start] exchange=binance method=ticker"
+      assert output =~ "[rest:stop] exchange=binance method=ticker duration=1.0ms"
+      assert output =~ "[rest:stop] exchange=? method=? duration=?"
+      assert output =~ "[rest:exception] exchange=binance method=ticker kind=error"
+      assert output =~ "[ws:tick] exchange=binance stream=trade type=update"
+    end
+  end
+
+  describe ".iex.exs" do
+    test "does not crash outside a Mix shell" do
+      elixir = System.find_executable("elixir")
+      assert is_binary(elixir)
+
+      {output, status} =
+        System.cmd(elixir, ["-e", "Code.eval_file(\".iex.exs\")"], stderr_to_stdout: true)
+
+      assert status == 0, output
     end
   end
 

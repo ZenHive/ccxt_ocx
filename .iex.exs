@@ -1,11 +1,19 @@
 # IEx auto-attach for ccxt_ocx maintainer dogfooding.
 #
-# Guarded so it only fires in :dev — `mix test` and any prod release path
-# stay untouched. Also guarded on `Code.ensure_loaded?/1` so a stripped
-# release (where CcxtOcx.DevTelemetry might be filtered out) doesn't blow
-# up the shell.
+# Guarded so it only fires in an active Mix :dev shell — `mix test`, plain
+# `iex`, and any prod release path stay untouched. Also guarded on
+# `Code.ensure_loaded?/1` so a stripped release (where CcxtOcx.DevTelemetry
+# might be filtered out) doesn't blow up the shell.
 
-if Mix.env() == :dev and Code.ensure_loaded?(CcxtOcx.DevTelemetry) do
+mix_dev? =
+  Code.ensure_loaded?(Mix) and function_exported?(Mix, :env, 0) and
+    try do
+      Mix.env() == :dev
+    rescue
+      ArgumentError -> false
+    end
+
+if mix_dev? and Code.ensure_loaded?(CcxtOcx.DevTelemetry) do
   CcxtOcx.DevTelemetry.watch()
 
   IO.puts("""

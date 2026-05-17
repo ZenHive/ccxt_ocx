@@ -49,6 +49,7 @@ defmodule CcxtOcx.MixProject do
 
       # Observability (Task 14 — telemetry events + future memory monitor)
       {:telemetry, "~> 1.3"},
+      {:nimble_options, "~> 1.1"},
 
       # Optional PromEx plugin (Task 21 — CcxtOcx.PromEx.Plugin).
       # Consumers add prom_ex to their own deps. The plugin module

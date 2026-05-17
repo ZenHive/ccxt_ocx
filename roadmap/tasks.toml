@@ -258,6 +258,7 @@ Pick before Task 7 lands so the macro contract is stable.
 - Validate that limiting scope dramatically reduces memory/CPU vs loading all 100+.
 """
 scored_at = "2026-05-16"
+depends_on = ["6"]
 
 [[task]]
 id = "7"
@@ -769,7 +770,7 @@ Document the operational tax: every CCXT release ships adapter fixes (new fields
 """
 
 [[task]]
-id = 22
+id = "22"
 phase = 6
 bundle = "dx"
 status = "done"

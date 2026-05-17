@@ -50,6 +50,21 @@ defmodule CcxtOcx.DevTelemetry do
     ws_tick: [:ccxt_ocx, :ws, :tick]
   }
 
+  @watch_schema NimbleOptions.new!(
+                  print: [
+                    type: :boolean,
+                    default: true
+                  ],
+                  filter: [
+                    type: {:list, {:in, Map.keys(@events)}},
+                    default: Map.keys(@events)
+                  ],
+                  io_device: [
+                    type: :any,
+                    default: :stdio
+                  ]
+                )
+
   @type event_key ::
           :runtime_memory | :rest_start | :rest_stop | :rest_exception | :ws_tick
 
@@ -75,15 +90,15 @@ defmodule CcxtOcx.DevTelemetry do
   """
   @spec watch(opts()) :: :ok
   def watch(opts \\ []) do
-    print? = Keyword.get(opts, :print, true)
-    io_device = Keyword.get(opts, :io_device, :stdio)
-    filter = Keyword.get(opts, :filter, Map.keys(@events))
+    opts = NimbleOptions.validate!(opts, @watch_schema)
+    print? = Keyword.fetch!(opts, :print)
+    io_device = Keyword.fetch!(opts, :io_device)
+    filter = Keyword.fetch!(opts, :filter)
+    events = Enum.map(filter, &Map.fetch!(@events, &1))
 
     :ok = detach()
     :ok = ensure_agent()
     :ok = Agent.update(__MODULE__, fn _ -> initial_state() end)
-
-    events = Enum.map(filter, &Map.fetch!(@events, &1))
 
     :ok =
       :telemetry.attach_many(

@@ -564,12 +564,14 @@ body = """
 id = "20"
 phase = 6
 bundle = "dx"
-status = "pending"
+status = "in_progress"
 title = "Tidewave examples"
 scores = { d = 2, b = 4, u = 5 }
 scored_at = "2026-05-16"
 body = """
 `docs/tidewave_examples.md` — copy-pasteable `project_eval` snippets for live exploration. The macros are most useful in IEx; show that.
+
+**Progress (2026-05-17):** Initial `docs/tidewave_examples.md` created and expanded with real patterns from live Tidewave sessions (Deribit option chains, define+call pattern, telemetry watching, complex surface pressure-testing). Referenced from README.md and CLAUDE.md.
 """
 
 # Phase 7 — Native-Elixir Migration ───────────────────────────────────────

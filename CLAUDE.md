@@ -63,6 +63,8 @@ iex -S mix tidewave   # listens on http://localhost:4014/tidewave/mcp
 
 `.mcp.json` is project-scoped. After cloning, restart Claude Code so the MCP server registers.
 
+See [docs/tidewave_examples.md](docs/tidewave_examples.md) for high-signal, copy-pasteable usage patterns discovered through live sessions (especially the define-then-call pattern and complex surface exploration).
+
 ## Common commands
 
 ```bash

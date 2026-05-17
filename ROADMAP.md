@@ -25,7 +25,7 @@
 
 **Last shipped:** no recent shipments
 
-**Up next:** Task 20 — Tidewave examples [D:2/B:4/U:5 → Eff:2.25] 🎯
+**Up next:** Task N8 — CCXT-drift policy [D:3/B:7/U:6 → Eff:2.17] 🎯
 <!-- FOCUS:END -->
 
 ---
@@ -119,7 +119,7 @@
 |------|--------|-------|
 | Task 18 | ⬜ | 🎁 **dx** · ex_doc + llms.txt [D:2/B:5/U:5 → Eff:2.5] 🎯 |
 | Task 19 | ⬜ | 🎁 **dx** · Descripex annotations on the public API [D:3/B:5/U:4 → Eff:1.5] 🚀 |
-| Task 20 | ⬜ | 🎁 **dx** · Tidewave examples [D:2/B:4/U:5 → Eff:2.25] 🎯 |
+| Task 20 | 🔄 | 🎁 **dx** · Tidewave examples [D:2/B:4/U:5 → Eff:2.25] 🎯 |
 <!-- TASKS:END -->
 
 ---

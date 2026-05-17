@@ -36,6 +36,18 @@ Telemetry events are emitted under the `[:ccxt_ocx]` prefix:
 
 Full event contract and handler examples live in `CcxtOcx.Telemetry`.
 
+## Live Exploration with Tidewave
+
+While building the macro layer, the fastest way to understand real behavior is to drive the system live:
+
+```bash
+iex -S mix tidewave
+```
+
+See [docs/tidewave_examples.md](docs/tidewave_examples.md) for copy-pasteable `project_eval` patterns, the critical "define global + call" technique, Deribit options exploration, memory/telemetry watching, and more.
+
+These examples are maintained from actual Tidewave sessions and will evolve into the usage patterns for the generated macros.
+
 ## Installation
 
 ```elixir

@@ -35,8 +35,53 @@ Telemetry events are emitted under the `[:ccxt_ocx]` prefix:
 
 - `[:ccxt_ocx, :runtime, :memory]` — QuickJS memory stats from any runtime
   or pool worker (see `CcxtOcx.Runtime.memory/1` and `CcxtOcx.RuntimePool.memory/1`).
+- `[:ccxt_ocx, :rest, :start | :stop | :exception]` — reserved for Phase 2
+  `defunified` (Task 7); metric definitions exist now so dashboards stay
+  stable when emission lights up.
+- `[:ccxt_ocx, :ws, :tick]` — reserved for Phase 3 `defstreaming` (Task 11).
 
 Full event contract and handler examples live in `CcxtOcx.Telemetry`.
+
+### PromEx (Prometheus / Grafana)
+
+`ccxt_ocx` ships a first-class [PromEx](https://hex.pm/packages/prom_ex)
+plugin that maps every event above to Prometheus metrics with zero glue.
+PromEx is an **optional dependency** — consumers add it to their own app:
+
+```elixir
+# mix.exs (consumer app)
+{:prom_ex, "~> 1.11"}
+```
+
+Then reference the plugin in PromEx config:
+
+```elixir
+defmodule MyApp.PromEx do
+  use PromEx, otp_app: :my_app
+
+  @impl true
+  def plugins do
+    [
+      PromEx.Plugins.Application,
+      PromEx.Plugins.Beam,
+      # Optional :pool / :poll_rate opts enable periodic pool memory snapshots.
+      {CcxtOcx.PromEx.Plugin, pool: MyApp.CcxtPool, poll_rate: 10_000}
+    ]
+  end
+end
+```
+
+Provided metrics:
+
+- `ccxt_ocx_runtime_memory_malloc_size_bytes` / `_used_size_bytes` / `_obj_count`
+  (last_value, tags: `[:server, :pool, :phase]`)
+- `ccxt_ocx_rest_duration_milliseconds` (distribution, buckets:
+  10/50/100/250/500/1000/5000 ms)
+- `ccxt_ocx_rest_total` (counter)
+- `ccxt_ocx_rest_exceptions_total` (counter)
+- `ccxt_ocx_ws_ticks_total` (counter)
+
+See `CcxtOcx.PromEx.Plugin` for tag-stability details and polling config.
 
 ## Live Exploration with Tidewave
 

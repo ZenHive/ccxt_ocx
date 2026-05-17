@@ -12,7 +12,10 @@ defmodule CcxtOcx.MixProject do
       aliases: aliases(),
       dialyzer: [
         plt_add_deps: :apps_direct,
-        plt_add_apps: [:mix],
+        # :telemetry_metrics is transitively provided by :prom_ex (optional dep)
+        # — surface it for the CcxtOcx.PromEx.Plugin metric DSL (last_value/2,
+        # distribution/2, counter/2).
+        plt_add_apps: [:mix, :telemetry_metrics],
         plt_local_path: "priv/plts",
         plt_core_path: "priv/plts",
         ignore_warnings: ".dialyzer_ignore.exs"
@@ -47,6 +50,13 @@ defmodule CcxtOcx.MixProject do
       # Observability (Task 14 — telemetry events + future memory monitor)
       {:telemetry, "~> 1.3"},
 
+      # Optional PromEx plugin (Task 21 — CcxtOcx.PromEx.Plugin).
+      # Consumers add prom_ex to their own deps. The plugin module
+      # itself is wrapped in `Code.ensure_loaded?(PromEx.Plugin)` so
+      # downstream projects that don't depend on prom_ex still compile
+      # ccxt_ocx cleanly — the module simply isn't defined for them.
+      {:prom_ex, "~> 1.11", optional: true},
+
       # JSON
       {:jason, "~> 1.4.5"},
 
@@ -65,9 +75,11 @@ defmodule CcxtOcx.MixProject do
       {:ex_ast, "~> 0.12.0", only: [:dev, :test], runtime: false},
       {:reach, "~> 2.3.4", only: [:dev, :test], runtime: false},
 
-      # Tidewave (non-Phoenix)
+      # Tidewave (non-Phoenix). Bandit is also kept in :test so PromEx's
+      # transitively-optional `:plug` dep is available when the optional
+      # `:prom_ex` compiles under :test (see `CcxtOcx.PromEx.Plugin`).
       {:tidewave, "~> 0.5.6", only: :dev},
-      {:bandit, "~> 1.11.1", only: :dev}
+      {:bandit, "~> 1.11.1", only: [:dev, :test]}
     ]
   end
 

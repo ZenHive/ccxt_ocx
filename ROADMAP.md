@@ -100,6 +100,7 @@
 | Task 16 | ⬜ | 🎁 **production** · ApiToolkit integration [D:4/B:6/U:6 → Eff:1.5] 🚀 |
 | Task 16b | ⬜ | 🎁 **production** · Hoist rate-limit + nonce state into Elixir [D:7/B:9/U:8 → Eff:1.21] 📋 |
 | Task 17 | ⬜ | 🎁 **production** · Sandboxed deployment shape [D:5/B:8/U:5 → Eff:1.3] 📋 |
+| Task 21 | ✅ | 🎁 **production** · PromEx plugin (`CcxtOcx.PromEx.Plugin`) [D:3/B:7/U:7 → Eff:2.33] 🎯 |
 <!-- TASKS:END -->
 
 ---

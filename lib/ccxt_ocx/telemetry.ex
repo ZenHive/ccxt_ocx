@@ -57,6 +57,14 @@ defmodule CcxtOcx.Telemetry do
       :telemetry.detach(handler_id)
 
   Or use the higher-level wrappers from this module when emitting from inside CcxtOcx.
+
+  ## PromEx
+
+  See `CcxtOcx.PromEx.Plugin` for a ship-with-the-library
+  [PromEx](https://hex.pm/packages/prom_ex) plugin that maps every event
+  in this module to Prometheus metrics with zero glue. Consumers add
+  `{:prom_ex, "~> 1.11"}` to their own deps and reference the plugin in
+  their PromEx config.
   """
 
   @prefix [:ccxt_ocx]

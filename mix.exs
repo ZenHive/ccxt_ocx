@@ -47,6 +47,11 @@ defmodule CcxtOcx.MixProject do
       # Observability (Task 14 — telemetry events + future memory monitor)
       {:telemetry, "~> 1.3"},
 
+      # Optional PromEx plugin (Task 21 — CcxtOcx.PromEx.Plugin).
+      # Consumers add prom_ex to their own deps; we only need it present
+      # at compile time so `use PromEx.Plugin` expands cleanly.
+      {:prom_ex, "~> 1.11", optional: true},
+
       # JSON
       {:jason, "~> 1.4.5"},
 
@@ -65,9 +70,11 @@ defmodule CcxtOcx.MixProject do
       {:ex_ast, "~> 0.12.0", only: [:dev, :test], runtime: false},
       {:reach, "~> 2.3.4", only: [:dev, :test], runtime: false},
 
-      # Tidewave (non-Phoenix)
+      # Tidewave (non-Phoenix). Bandit is also kept in :test so PromEx's
+      # transitively-optional `:plug` dep is available when the optional
+      # `:prom_ex` compiles under :test (see `CcxtOcx.PromEx.Plugin`).
       {:tidewave, "~> 0.5.6", only: :dev},
-      {:bandit, "~> 1.11.1", only: :dev}
+      {:bandit, "~> 1.11.1", only: [:dev, :test]}
     ]
   end
 

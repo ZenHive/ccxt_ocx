@@ -23,6 +23,8 @@ defmodule CcxtOcx.BundleSurface.Compile do
   See the quickbeam skill for the canonical pattern.
   """
 
+  alias CcxtOcx.Declarations
+
   @bundle_relative "node_modules/ccxt/dist/ccxt.browser.min.js"
   @exchange_dts "node_modules/ccxt/js/src/base/Exchange.d.ts"
   @load_timeout to_timeout(second: 30)
@@ -32,50 +34,10 @@ defmodule CcxtOcx.BundleSurface.Compile do
   # Keeps verification fast while still exercising the important signing/WS paths.
   @default_sample_exchanges ["binance", "bybit", "okx", "deribit", "coinbaseexchange"]
 
-  # Verb prefixes that mark a method as part of the public unified surface.
-  @verb_prefixes ~w(fetch create watch cancel edit loadMarkets set close describe)
-
-  # Prefixes that mark a method as internal/base-class helper machinery and
-  # MUST be filtered out even if they collide with a verb prefix (e.g. `parse`,
-  # `handle`, `safeMarket`).
-  @internal_prefixes ~w(parse handle sign request safe market nonce define extend)
-
-  # Exact-name denylist for CCXT base-class helpers that *do* match a verb
-  # prefix and *don't* match an internal prefix (so the prefix heuristic alone
-  # captures them) but are not part of the unified public surface. Pollution
-  # source: CCXT base Exchange ships these as plumbing — pagination, partial
-  # balance access, HTTP retry, webpage fetch, safe-dict construction, and the
-  # `loadMarkets` internal helper. Letting them stay in the manifest would mean
-  # Phase 2's `defunified` macro generates wrappers for internal helpers with no
-  # documented contract. Extend when future CCXT versions add new helpers that
-  # slip past the prefix filter.
-  @additional_denied ~w(
-    fetch2
-    fetchPaginatedCallCursor
-    fetchPaginatedCallDeterministic
-    fetchPaginatedCallDynamic
-    fetchPaginatedCallIncremental
-    fetchPartialBalance
-    fetchWebEndpoint
-    createSafeDictionary
-    loadMarketsHelper
-  )
-
-  # Trade-plane methods that don't match the verb-prefix filter but are part of
-  # the public unified surface (CCXT exposes them as bare-name methods on
-  # exchanges that support them — withdrawals, transfers, isolated/cross
-  # margin adjustments). Without this allowlist they'd be dropped from the
-  # snapshot and never get a defunified wrapper.
-  @additional_unified_methods ~w(
-    withdraw
-    transfer
-    addMargin
-    reduceMargin
-    borrowCrossMargin
-    borrowIsolatedMargin
-    repayCrossMargin
-    repayIsolatedMargin
-  )
+  # Filter ownership moved to CcxtOcx.Declarations.Compile (Task 6).
+  # The four lists and the predicate now live in one place so the "public unified
+  # surface" decision is the single source of truth for both the legacy name
+  # extractor and the rich declaration parser.
 
   @doc """
   Absolute path to the CCXT browser bundle (same logic as Tiers.Compile).
@@ -124,7 +86,7 @@ defmodule CcxtOcx.BundleSurface.Compile do
     names =
       OXC.collect(ast, fn
         %{type: :method_definition, key: %{name: name}} = _node ->
-          if public_unified_method?(name), do: {:keep, name}, else: :skip
+          if Declarations.Compile.public_unified_method?(name), do: {:keep, name}, else: :skip
 
         _ ->
           :skip
@@ -196,16 +158,6 @@ defmodule CcxtOcx.BundleSurface.Compile do
   end
 
   # --- Private helpers ------------------------------------------------------
-
-  @spec public_unified_method?(String.t()) :: boolean()
-  defp public_unified_method?(name) do
-    has_good_prefix = Enum.any?(@verb_prefixes, &String.starts_with?(name, &1))
-    has_bad_prefix = Enum.any?(@internal_prefixes, &String.starts_with?(name, &1))
-    in_allowlist = name in @additional_unified_methods
-    in_denylist = name in @additional_denied
-
-    (has_good_prefix or in_allowlist) and not has_bad_prefix and not in_denylist
-  end
 
   @spec apply_browser_stubs(pid()) :: :ok
   defp apply_browser_stubs(rt) do

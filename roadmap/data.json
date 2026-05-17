@@ -243,7 +243,7 @@
       "phase": 2,
       "bundle": "macros",
       "milestone": "v0_1",
-      "status": "pending",
+      "status": "done",
       "title": "Discover and parse CCXT declaration sources with OXC",
       "scores": {
         "d": 6,
@@ -260,7 +260,9 @@
         "Tests fail loudly if CCXT declaration file layout changes or required methods disappear"
       ],
       "body": "Build a compile-time module that discovers the actual CCXT TypeScript declaration sources and extracts unified method metadata with `OXC.parse/2` + `OXC.collect/2`. Tidewave/file inspection showed `node_modules/ccxt/js/ccxt.d.ts` is an import/export barrel and does not itself contain methods such as `fetchTicker`, `createOrder`, or `watchTicker`; method declarations live in `js/src/base/Exchange.d.ts`, per-exchange declarations under `js/src/*.d.ts`, and pro declarations under `js/src/pro/*.d.ts`. Output an Elixir term describing the method name, parameter list, return type, owning surface (`:base`, `:exchange`, `:pro`), and exchange-specific overrides where present.\n",
+      "done_at": "2026-05-17",
       "scored_at": "2026-05-16",
+      "implemented": "OXC parser (Declarations.Compile) extracts name/params/return_type/source/surface + overrides from base/Exchange.d.ts + exchange + pro/*.d.ts. Loud layout guards on the 3 smoke methods. Filter ownership centralized; BundleSurface delegates. All gates (coverage, compile, dialyzer, credo, integration tests, verify_bundle) passed.",
       "cross_repo": []
     },
     {

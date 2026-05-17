@@ -168,4 +168,83 @@ defmodule CcxtOcx.RuntimeTest do
     # TODO(Task 3): add :vars / :timeout / :name option-pass-through tests for
     # eval/3 + call/4 + start_link/1 before RuntimePool work lands.
   end
+
+  describe "telemetry (Task 14)" do
+    test "memory/1 returns measurements and emits [:ccxt_ocx, :runtime, :memory]", %{server: server} do
+      handler_id = make_ref()
+      test_pid = self()
+
+      :telemetry.attach(
+        handler_id,
+        [:ccxt_ocx, :runtime, :memory],
+        fn event, meas, meta, _config ->
+          send(test_pid, {:telemetry, event, meas, meta})
+        end,
+        %{}
+      )
+
+      on_exit(fn -> :telemetry.detach(handler_id) end)
+
+      measurements = CcxtOcx.Runtime.memory(server)
+
+      assert is_map(measurements)
+      assert Map.has_key?(measurements, :malloc_size)
+      assert Map.has_key?(measurements, :memory_used_size)
+      assert Map.has_key?(measurements, :obj_count)
+
+      assert_receive {:telemetry, [:ccxt_ocx, :runtime, :memory], ^measurements, %{server: ^server}}, 1_000
+    end
+
+    test "memory/1 emits pid metadata for named runtimes" do
+      handler_id = make_ref()
+      test_pid = self()
+      name = :"runtime_#{System.unique_integer([:positive])}"
+
+      {:ok, server} = CcxtOcx.Runtime.start_link(name: name)
+
+      :telemetry.attach(
+        handler_id,
+        [:ccxt_ocx, :runtime, :memory],
+        fn event, meas, meta, _config ->
+          send(test_pid, {:telemetry, event, meas, meta})
+        end,
+        %{}
+      )
+
+      on_exit(fn ->
+        :telemetry.detach(handler_id)
+        if Process.alive?(server), do: CcxtOcx.Runtime.stop(server)
+      end)
+
+      measurements = CcxtOcx.Runtime.memory(name)
+
+      assert_receive {:telemetry, [:ccxt_ocx, :runtime, :memory], ^measurements, %{server: ^server}}, 1_000
+    end
+
+    test "baseline memory event is emitted during init", _context do
+      handler_id = make_ref()
+      test_pid = self()
+
+      :telemetry.attach(
+        handler_id,
+        [:ccxt_ocx, :runtime, :memory],
+        fn event, _meas, meta, _config ->
+          send(test_pid, {:telemetry_init, event, meta})
+        end,
+        %{}
+      )
+
+      {:ok, server} = CcxtOcx.Runtime.start_link([])
+
+      on_exit(fn ->
+        :telemetry.detach(handler_id)
+        if Process.alive?(server), do: CcxtOcx.Runtime.stop(server)
+      end)
+
+      assert_receive {:telemetry_init, [:ccxt_ocx, :runtime, :memory], %{server: ^server, phase: :init}}, 2_000
+
+      # Also verify the explicit path still works
+      _ = CcxtOcx.Runtime.memory(server)
+    end
+  end
 end

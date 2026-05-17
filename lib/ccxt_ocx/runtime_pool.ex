@@ -38,6 +38,12 @@ defmodule CcxtOcx.RuntimePool do
   via the client-side monitor and replaced the same way. Bundle-reload
   cost is paid on death, not per call. The wrapper GenServer itself is
   supervised by the top-level OTP supervision tree.
+
+  ## Telemetry
+
+  `memory/1` emits `[:ccxt_ocx, :runtime, :memory]` with `%{pool: name}` in
+  the metadata (sampling one worker). See `CcxtOcx.Telemetry` for the event
+  contract and handler patterns.
   """
 
   use GenServer
@@ -122,6 +128,26 @@ defmodule CcxtOcx.RuntimePool do
   @doc "Return diagnostics about the pool."
   @spec info(pool()) :: info()
   def info(pool), do: GenServer.call(pool, :info)
+
+  @doc """
+  Sample QuickJS memory usage from one worker in the pool and emit
+  `[:ccxt_ocx, :runtime, :memory]` with `pool` in the metadata.
+
+  Because all workers in a pool are homogeneous long-lived runtimes, a single
+  sample is representative. The measurement map is returned so callers can
+  use the numbers directly.
+  """
+  @spec memory(pool()) :: map() | {:error, :checkout_timeout}
+  def memory(pool) do
+    case run(pool, fn rt -> QuickBEAM.memory_usage(rt) end) do
+      {:error, :checkout_timeout} = err ->
+        err
+
+      measurements ->
+        CcxtOcx.Telemetry.execute([:runtime, :memory], measurements, %{pool: pool})
+        measurements
+    end
+  end
 
   ## GenServer callbacks
 

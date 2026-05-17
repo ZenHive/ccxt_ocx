@@ -44,6 +44,9 @@ defmodule CcxtOcx.MixProject do
       # Pooling — long-lived CCXT runtimes (Task 3)
       {:nimble_pool, "~> 1.1"},
 
+      # Observability (Task 14 — telemetry events + future memory monitor)
+      {:telemetry, "~> 1.3"},
+
       # JSON
       {:jason, "~> 1.4.5"},
 

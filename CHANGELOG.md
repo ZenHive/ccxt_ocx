@@ -6,6 +6,21 @@ All notable changes to `ccxt_ocx` are recorded here. The format follows
 
 ## [Unreleased]
 
+### Phase 5: Production Hardening
+
+#### Task 14: Telemetry events
+**Completed** | [D:3/B:7/U:7 → Eff:2.33] 🎯
+
+Canonical `:telemetry` events under the `[:ccxt_ocx]` prefix so Prometheus, Datadog, PromEx, etc. can attach with zero glue code.
+
+- New `CcxtOcx.Telemetry` module — single owner of the prefix, event name constants, `span/3` + `execute/3` helpers, and full documentation of the three families (`:rest`, `:ws`, `:runtime`).
+- `CcxtOcx.Runtime.memory/1` + `memory_usage/1` (raw) — emit `[:ccxt_ocx, :runtime, :memory]` with QuickJS stats; baseline snapshot on init, final snapshot on terminate.
+- `CcxtOcx.RuntimePool.memory/1` — samples any worker and emits with `pool` metadata.
+- Tests, moduledoc sections, and a short README blurb.
+- `{:telemetry, "~> 1.0"}` added as a runtime dependency.
+
+This is the first deliverable of Phase 5 and the observability seam for Task 15 (memory monitoring) and all future macro/WS work.
+
 ### Phase 1: Foundation — Runtime Lifecycle
 
 #### Task 5b: Bundle-bump verification pipeline

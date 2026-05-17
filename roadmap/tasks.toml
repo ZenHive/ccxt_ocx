@@ -435,13 +435,15 @@ Once T1-T5 run green for a sustained period (~weeks), publish `docs/trade_plane_
 id = "14"
 phase = 5
 bundle = "production"
-status = "pending"
+status = "done"
 title = "Telemetry events"
 scores = { d = 3, b = 7, u = 7 }
-scored_at = "2026-05-16"
 body = """
 `[:ccxt_ocx, :rest, :start | :stop | :exception]`, `[:ccxt_ocx, :ws, :tick]`, `[:ccxt_ocx, :runtime, :memory]`. Standard `:telemetry` shape so downstream metrics stacks (Prometheus, Datadog) plug in with no glue.
 """
+started_at = "2026-05-17"
+scored_at = "2026-05-16"
+done_at = "2026-05-17"
 
 [[task]]
 id = "15"

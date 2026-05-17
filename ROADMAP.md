@@ -25,7 +25,7 @@
 
 **Last shipped:** no recent shipments
 
-**Up next:** Task 14 — Telemetry events [D:3/B:7/U:7 → Eff:2.33] 🎯
+**Up next:** Task 20 — Tidewave examples [D:2/B:4/U:5 → Eff:2.25] 🎯
 <!-- FOCUS:END -->
 
 ---
@@ -103,7 +103,7 @@
 <!-- TASKS:BEGIN phase=5 -->
 | Task | Status | Notes |
 |------|--------|-------|
-| Task 14 | ⬜ | 🎁 **production** · Telemetry events [D:3/B:7/U:7 → Eff:2.33] 🎯 |
+| Task 14 | ✅ | 🎁 **production** · Telemetry events [D:3/B:7/U:7 → Eff:2.33] 🎯 |
 | Task 15 | ⬜ | 🎁 **production** · Memory monitoring + restart policy [D:5/B:8/U:7 → Eff:1.5] 🚀 |
 | Task 16 | ⬜ | 🎁 **production** · ApiToolkit integration [D:4/B:6/U:6 → Eff:1.5] 🚀 |
 | Task 16b | ⬜ | 🎁 **production** · Hoist rate-limit + nonce state into Elixir [D:7/B:9/U:8 → Eff:1.21] 📋 |

@@ -27,6 +27,15 @@ The runtime applies browser stubs, loads
 mid-call do not affect the runtime — see the "Isolation" tests in
 `test/ccxt_ocx/runtime_test.exs`.
 
+## Observability
+
+Telemetry events are emitted under the `[:ccxt_ocx]` prefix:
+
+- `[:ccxt_ocx, :runtime, :memory]` — QuickJS memory stats from any runtime
+  or pool worker (see `CcxtOcx.Runtime.memory/1` and `CcxtOcx.RuntimePool.memory/1`).
+
+Full event contract and handler examples live in `CcxtOcx.Telemetry`.
+
 ## Installation
 
 ```elixir

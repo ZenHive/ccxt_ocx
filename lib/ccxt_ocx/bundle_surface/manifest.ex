@@ -4,18 +4,30 @@ defmodule CcxtOcx.BundleSurface.Manifest do
 
   The file contains a single top-level map that is the "known good"
   surface for the current committed CCXT version.
+
+  Resolved via `:code.priv_dir/1` so the path is stable regardless of which
+  directory `mix ccxt.verify_bundle` is invoked from, and so downstream apps
+  that pull `ccxt_ocx` in as a hex dep see the same manifest path the host
+  build did.
   """
 
-  @path "priv/ccxt_surface.exs"
+  @path "ccxt_surface.exs"
 
-  @doc "Absolute path to the manifest (resolved against the current working directory)."
-  def path, do: Path.join(File.cwd!(), @path)
+  @doc "Absolute path to the manifest, resolved against `:code.priv_dir(:ccxt_ocx)`."
+  @spec path() :: String.t()
+  def path do
+    case :code.priv_dir(:ccxt_ocx) do
+      {:error, :bad_name} -> Path.join([File.cwd!(), "priv", @path])
+      priv -> Path.join(to_string(priv), @path)
+    end
+  end
 
   @doc "Read and evaluate the committed manifest. Raises on missing file."
+  @spec read() :: map()
   def read do
     p = path()
 
-    unless File.exists?(p) do
+    if !File.exists?(p) do
       raise """
       CCXT surface manifest not found at #{p}.
 
@@ -33,6 +45,7 @@ defmodule CcxtOcx.BundleSurface.Manifest do
   Write a new snapshot to the manifest path (pretty-printed for human review).
   Used by the `--accept` / `--write` flow of the Mix task.
   """
+  @spec write(map()) :: :ok
   def write(snapshot) when is_map(snapshot) do
     p = path()
     File.mkdir_p!(Path.dirname(p))
@@ -54,12 +67,16 @@ defmodule CcxtOcx.BundleSurface.Manifest do
   end
 
   @doc "Return a human-readable diff between two snapshots (method list + sampled has)."
+  @spec diff(map(), map()) :: %{
+          methods: %{added: [String.t()], removed: [String.t()]},
+          has_changed?: boolean()
+        }
   def diff(old, new) do
-    old_methods = Map.get(old, :unified_methods, []) |> MapSet.new()
-    new_methods = Map.get(new, :unified_methods, []) |> MapSet.new()
+    old_methods = old |> Map.get(:unified_methods, []) |> MapSet.new()
+    new_methods = new |> Map.get(:unified_methods, []) |> MapSet.new()
 
-    added = MapSet.difference(new_methods, old_methods) |> MapSet.to_list() |> Enum.sort()
-    removed = MapSet.difference(old_methods, new_methods) |> MapSet.to_list() |> Enum.sort()
+    added = new_methods |> MapSet.difference(old_methods) |> MapSet.to_list() |> Enum.sort()
+    removed = old_methods |> MapSet.difference(new_methods) |> MapSet.to_list() |> Enum.sort()
 
     %{
       methods: %{added: added, removed: removed},

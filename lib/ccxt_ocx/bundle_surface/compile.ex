@@ -31,6 +31,22 @@ defmodule CcxtOcx.BundleSurface.Compile do
   # Keeps verification fast while still exercising the important signing/WS paths.
   @default_sample_exchanges ["binance", "bybit", "okx", "deribit", "coinbaseexchange"]
 
+  # Trade-plane methods that don't match the verb-prefix filter but are part of
+  # the public unified surface (CCXT exposes them as bare-name methods on
+  # exchanges that support them — withdrawals, transfers, isolated/cross
+  # margin adjustments). Without this allowlist they'd be dropped from the
+  # snapshot and never get a defunified wrapper.
+  @additional_unified_methods ~w(
+    withdraw
+    transfer
+    addMargin
+    reduceMargin
+    borrowCrossMargin
+    borrowIsolatedMargin
+    repayCrossMargin
+    repayIsolatedMargin
+  )
+
   @doc """
   Absolute path to the CCXT browser bundle (same logic as Tiers.Compile).
   """
@@ -57,13 +73,14 @@ defmodule CcxtOcx.BundleSurface.Compile do
 
   Filters out internal helpers (`parse*`, `handle*`, `sign`, `request`, etc.)
   and keeps the high-level `fetch*`, `create*`, `watch*`, `cancel*`, `edit*`,
-  `loadMarkets`, `set*`, etc.
+  `loadMarkets`, `set*`, etc. plus the bare-name trade-plane methods listed in
+  `@additional_unified_methods`.
 
   Returns a sorted list of strings.
   """
   @spec extract_unified_methods(String.t()) :: [String.t()]
   def extract_unified_methods(dts_path) do
-    unless File.exists?(dts_path) do
+    if !File.exists?(dts_path) do
       raise """
       CCXT declaration file not found at #{dts_path}.
 
@@ -107,7 +124,7 @@ defmodule CcxtOcx.BundleSurface.Compile do
   def probe_has_tables(exchange_ids) when is_list(exchange_ids) do
     bundle_path = bundle_path()
 
-    unless File.exists?(bundle_path) do
+    if !File.exists?(bundle_path) do
       raise """
       CCXT bundle not found at #{bundle_path}.
 
@@ -122,9 +139,12 @@ defmodule CcxtOcx.BundleSurface.Compile do
       apply_browser_stubs(rt)
       {:ok, _} = QuickBEAM.call(rt, "eval", [bundle], timeout: @load_timeout)
 
-      # Build a JS snippet that returns a JSON object of has tables
-      js = has_probe_js(exchange_ids)
-      {:ok, json} = QuickBEAM.eval(rt, js, timeout: 60_000)
+      {:ok, json} =
+        QuickBEAM.eval(rt, has_probe_js(),
+          vars: %{"__exchange_ids" => exchange_ids},
+          timeout: 60_000
+        )
+
       Jason.decode!(json)
     after
       QuickBEAM.stop(rt)
@@ -140,15 +160,14 @@ defmodule CcxtOcx.BundleSurface.Compile do
     # Prefer the already-compiled Tier data if it is safe to call here.
     # During early compile of the verifier task itself we may not have it yet,
     # so we keep a static fallback.
-    try do
-      CcxtOcx.Tiers.tier1_exchanges()
-    rescue
-      _ -> @default_sample_exchanges
-    end
+    CcxtOcx.Tiers.tier1_exchanges()
+  rescue
+    _ -> @default_sample_exchanges
   end
 
   # --- Private helpers ------------------------------------------------------
 
+  @spec public_unified_method?(String.t()) :: boolean()
   defp public_unified_method?(name) do
     prefixes = ["fetch", "create", "watch", "cancel", "edit", "loadMarkets", "set", "close", "describe"]
 
@@ -156,10 +175,12 @@ defmodule CcxtOcx.BundleSurface.Compile do
 
     has_good_prefix = Enum.any?(prefixes, &String.starts_with?(name, &1))
     has_bad_prefix = Enum.any?(internal, &String.starts_with?(name, &1))
+    in_allowlist = name in @additional_unified_methods
 
-    has_good_prefix and not has_bad_prefix
+    (has_good_prefix or in_allowlist) and not has_bad_prefix
   end
 
+  @spec apply_browser_stubs(pid()) :: :ok
   defp apply_browser_stubs(rt) do
     {:ok, _} =
       QuickBEAM.eval(rt, "globalThis.self = globalThis; globalThis.window = globalThis;")
@@ -173,13 +194,17 @@ defmodule CcxtOcx.BundleSurface.Compile do
     :ok
   end
 
-  defp has_probe_js(exchange_ids) do
-    ids = Enum.map_join(exchange_ids, ", ", &~s|"#{&1}"|)
-
+  # JS source for the has-table probe. Reads exchange ids from the JS global
+  # `__exchange_ids` injected by `QuickBEAM.eval/3`'s `:vars` option — this
+  # keeps Elixir-side data out of the source string entirely, so an attacker
+  # controlling the exchange-id list (improbable, but cheap to neutralize)
+  # cannot inject JS.
+  @spec has_probe_js() :: String.t()
+  defp has_probe_js do
     """
     (async () => {
       const result = {};
-      const ids = [#{ids}];
+      const ids = __exchange_ids;
       for (const id of ids) {
         try {
           const Ctor = self.ccxt.default[id] || self.ccxt[id];

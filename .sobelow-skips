@@ -1,2 +1,7 @@
+RCE.CodeModule: Code Execution in `Code.eval_file`,lib/ccxt_ocx/bundle_surface/manifest.ex:40,1940DE0
+Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/ccxt_ocx/bundle_surface/manifest.ex:51,623409F
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/bundle_surface/compile.ex:135,2A8C48D
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/bundle_surface/compile.ex:91,2E3D0A2
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/tiers/compile.ex:68,7844D5D
 Traversal.FileModule: Directory Traversal in `File.read`,lib/ccxt_ocx/runtime.ex:234,2105A9C
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/ccxt_ocx/bundle_surface/manifest.ex:65,163F5C2

@@ -39,12 +39,23 @@ defmodule Mix.Tasks.Ccxt.VerifyBundle do
   @requirements ["app.config"]
 
   @impl true
+  @spec run([String.t()]) :: :ok
   def run(args) do
-    {opts, _rest, _invalid} =
+    {opts, _rest, invalid} =
       OptionParser.parse(args,
         switches: [accept: :boolean, write: :boolean, sample_exchanges: :string],
         aliases: [a: :accept, w: :write]
       )
+
+    if invalid != [] do
+      Mix.raise(
+        "Unknown or malformed option(s): " <>
+          Enum.map_join(invalid, ", ", fn
+            {k, nil} -> k
+            {k, v} -> "#{k}=#{v}"
+          end)
+      )
+    end
 
     accept? = Keyword.get(opts, :accept, false) or Keyword.get(opts, :write, false)
 
@@ -94,6 +105,7 @@ defmodule Mix.Tasks.Ccxt.VerifyBundle do
     end
   end
 
+  @spec print_diff(map(), map()) :: :ok
   defp print_diff(diff, snapshot) do
     Mix.shell().info("")
 

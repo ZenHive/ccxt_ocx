@@ -65,6 +65,11 @@ phase = 4
 order = 1
 description = "Testnet harnesses + signed-payload byte-comparison for the trade plane"
 
+[bundles.dex-verify]
+phase = 4
+order = 2
+description = "DEX verification track — on-chain signing (EIP-712, web3 personal_sign), wallet handling, testnet harness shape distinct from CEX. Ranks above Tier 3 per ROADMAP § Per-Exchange Coverage."
+
 [bundles.production]
 phase = 5
 order = 1
@@ -91,7 +96,7 @@ status = "active"
 
 [milestones.v1_0]
 name = "v1.0 — production-ready trade plane (orders + WS auth streams)"
-description = "Full unified CCXT surface incl. signed trade plane verified against Binance USDT-M futures + Deribit options testnets, with auth WS streams (watchBalance/watchOrders/watchMyTrades), reconnect/heartbeat policy, rate-limit + nonce hoisted into Elixir, and memory/restart safety. OKX explicitly out of scope for v1.0."
+description = "Macro-generated unified CCXT surface for all exchanges, with signed trade plane verified end-to-end against Binance USDT-M futures + Deribit options testnets only. Auth WS streams (watchBalance/watchOrders/watchMyTrades) on the same two venues; reconnect/heartbeat policy, rate-limit + nonce hoisted into Elixir, memory/restart safety. Tier 1 testnet harnesses for bybit (T7), okx (T3), and coinbaseexchange (T8) are explicitly post-v1.0 — Tier 1 is not fully verified at v1.0, by design. See ROADMAP § Per-Exchange Coverage."
 target_version = "1.0.0"
 order = 2
 status = "pending"
@@ -495,6 +500,62 @@ body = """
 Once T1-T5 run green for a sustained period (~weeks), publish `docs/trade_plane_status.md` listing per-exchange signing verification status and any known limitations. If instability is found, *that* is when we narrow scope — with a repro and a justification, not preemptively.
 """
 scored_at = "2026-05-16"
+
+[[task]]
+id = "T7"
+phase = 4
+bundle = "trade-verify"
+status = "pending"
+title = "Testnet harness — Bybit"
+scores = { d = 5, b = 8, u = 7 }
+depends_on = ["5c"]
+body = """
+`BYBIT_TESTNET_API_KEY` + `_SECRET` env vars (per `~/.claude/includes/critical-rules.md` § "INTEGRATION TESTS" — `flunk/1` with the exact export commands and the testnet signup URL when missing, never skip silently). Place a small test order, query balance, cancel the order, fetch fills. Tag `:integration`, `:network`, `:testnet`. Tier-1-scoped via `CcxtOcx.Tiers` (Task 5c). Run on every PR via CI to catch ccxt bundle bumps that break signing.
+
+Bybit-specific quirks worth verifying: unified vs derivatives API path selection in CCXT, `category` parameter routing for perpetuals vs options, hedge-mode vs one-way position mode in signed payloads.
+
+Closes the Tier 1 verification gap surfaced by ROADMAP § Per-Exchange Coverage.
+"""
+scored_at = "2026-05-18"
+
+[[task]]
+id = "T8"
+phase = 4
+bundle = "trade-verify"
+status = "pending"
+title = "Testnet harness — Coinbase Exchange"
+scores = { d = 5, b = 7, u = 6 }
+depends_on = ["5c"]
+body = """
+`COINBASE_TESTNET_API_KEY` + `_SECRET` env vars (per `~/.claude/includes/critical-rules.md` § "INTEGRATION TESTS" — `flunk/1` with the exact export commands and the testnet signup URL when missing, never skip silently). Place a small test order, query balance, cancel the order, fetch fills. Tag `:integration`, `:network`, `:testnet`. Tier-1-scoped via `CcxtOcx.Tiers` (Task 5c). Run on every PR via CI to catch ccxt bundle bumps that break signing.
+
+Coinbase Exchange (formerly Coinbase Pro) uses HMAC-SHA256 + passphrase header (`CB-ACCESS-PASSPHRASE`), `CB-ACCESS-TIMESTAMP` in Unix-epoch seconds, prehash string format distinct from Binance/Deribit/OKX. Worth fingerprinting against CCXT's `sign()` impl during T4 byte-equality work.
+
+Closes the Tier 1 verification gap surfaced by ROADMAP § Per-Exchange Coverage.
+"""
+scored_at = "2026-05-18"
+
+[[task]]
+id = "D1"
+phase = 4
+bundle = "dex-verify"
+status = "pending"
+title = "DEX verification track — design + first venue (hyperliquid)"
+scores = { d = 8, b = 8, u = 8 }
+body = """
+DEX signing is structurally different from CEX testnet harnesses (T1–T8): on-chain signing (EIP-712, web3 `personal_sign`, wallet integration), no API keys, settlement on-chain rather than via REST acknowledgment. Cannot be a copy of T1's shape.
+
+Scope:
+
+1. **Design the DEX verification model.** Decide whether to use venue-provided testnets (hyperliquid has one) with real wallet signing against a funded test account; or a local signing harness that asserts byte equality of the signed payload against a known-good off-chain reference (ethers.js / starknet.js / venue SDKs). The DEX bucket (`hyperliquid`, `aster`, `lighter`, `derive`) likely needs both — testnet for end-to-end, byte-equality for signing correctness. Document the chosen shape in `docs/dex_verification.md`.
+
+2. **First venue: hyperliquid.** Most CCXT-mature of the DEX bucket. Has a public testnet API and well-documented EIP-712 signing. Build the harness, place + cancel a test order, fetch fills.
+
+3. **Wallet/key handling.** Cannot reuse `BINANCE_TESTNET_API_KEY` patterns — private keys go through a different path (env var → signer module, never logged, never serialized to telemetry). Pattern must be reusable across the four DEX venues.
+
+Per ROADMAP § Per-Exchange Coverage, the DEX bucket ranks above Tier 3. This task unblocks aster/lighter/derive once the shape is set.
+"""
+scored_at = "2026-05-18"
 
 # Phase 5 — Production Hardening ──────────────────────────────────────────
 

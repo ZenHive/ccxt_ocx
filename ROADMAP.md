@@ -86,6 +86,9 @@
 | Task T4 | ⬜ | 🎁 **trade-verify** · 🚀 **v1_0** · Signed-payload byte-comparison harness [D:7/B:9/U:8 → Eff:1.21] 📋 |
 | Task T5 | ⬜ | 🎁 **trade-verify** · 🚀 **v1_0** · WS authenticated streams (`watchBalance`, `watchMyTrades`, `watchOrders`) [D:6/B:8/U:7 → Eff:1.25] 📋 |
 | Task T6 | ⬜ | 🎁 **trade-verify** · 🚀 **v1_0** · Document the actual stability surface [D:2/B:6/U:7 → Eff:3.25] 🎯 |
+| Task T7 | ⬜ | 🎁 **trade-verify** · Testnet harness — Bybit [D:5/B:8/U:7 → Eff:1.5] 🚀 |
+| Task T8 | ⬜ | 🎁 **trade-verify** · Testnet harness — Coinbase Exchange [D:5/B:7/U:6 → Eff:1.3] 📋 |
+| Task D1 | ⬜ | 🎁 **dex-verify** · DEX verification track — design + first venue (hyperliquid) [D:8/B:8/U:8 → Eff:1.0] 📋 |
 <!-- TASKS:END -->
 
 ---
@@ -139,6 +142,59 @@
 | Task N7 | ⬜ | 🎁 **native** · Replicate to remaining Tier 1 venues [D:8/B:8/U:6 → Eff:0.88] ⚠️ |
 | Task N8 | ⬜ | 🎁 **native** · CCXT-drift policy [D:3/B:7/U:6 → Eff:2.17] 🎯 |
 <!-- TASKS:END -->
+
+---
+
+## Per-Exchange Coverage
+
+> Honest scope per exchange. The macro layer (Phase 2) emits wrappers for **every**
+> CCXT exchange — but verification, byte-equality signing checks, and native ports
+> are committed by tier. Tier source-of-truth: `priv/priority_tiers.json`.
+
+**User-stated priority:** Tier 1 is the minimum acceptable scope, Tier 2 is the stretch goal, the DEX bucket ranks above Tier 3.
+
+### 🟢 Verified — testnet harness + byte-equality (where applicable)
+
+| Exchange | REST data | REST signed | WS public | WS auth | Native | Backed by |
+|---|---|---|---|---|---|---|
+| **binance** (USDT-M) | ✅ Tier 1 | 🎯 v1.0 | ✅ smoke | 🎯 v1.0 | 🎯 N4–N6 | T1, T4, T5 |
+| **deribit** (options) | ✅ Tier 1 | 🎯 v1.0 | ✅ smoke | 🎯 v1.0 | 🎯 N7 | T2, T5 |
+
+### 🟡 Tier 1 — minimum acceptable scope, harness gap
+
+These three are **Tier 1** (the floor) but don't yet have testnet harnesses committed in `roadmap/tasks.toml`. Closing this gap is required for an honest "Tier 1 covered" claim.
+
+| Exchange | REST data | REST signed | WS public | WS auth | Native | Status |
+|---|---|---|---|---|---|---|
+| **bybit** | macro | macro, **unverified** | 📋 Phase 3 spot-check | ❌ | 🎯 N7 | needs T-task |
+| **okx** | ✅ Tier 1 | 📋 post-v1.0 (T3) | ✅ smoke | 📋 post-v1.0 | 🎯 N7 | T3 deferred |
+| **coinbaseexchange** | macro | macro, **unverified** | 📋 Phase 3 spot-check | ❌ | 🎯 N7 | needs T-task |
+
+### 🟠 Tier 2 — stretch goal (post-v1.0)
+
+Realistic next-milestone target after Tier 1 is closed. Macros emit; verification not yet committed.
+
+`kraken` *(WS spot-checked in Phase 3)*, `kucoin`, `gate`, `htx`, `bitmex`, `bitfinex`.
+
+### 🔷 DEX bucket — committed ahead of Tier 3
+
+On-chain signing (EIP-712, web3 personal_sign, wallet integration) is a structurally different verification path than CEX testnets — needs its own track. Ranked above Tier 3 because downstream consumers (option-seller / market-maker tooling) need this earlier than any Tier 3 venue.
+
+`hyperliquid`, `aster`, `lighter`, `derive`.
+
+### 🔵 Best-effort — macro-generated, no verification commitments
+
+All Tier 3 (`bitget`, `bingx`, `bitmart`, `coinex`, `cryptocom`, `mexc`, `hashkey`, `woo`, `dydx`, `paradex`, `apex`, `woofipro`, `modetrade`) and the ~80+ long-tail CCXT exchanges land here. **You get exactly what CCXT gives you — no extra guarantees from this library.** For real money, run your own integration tests.
+
+### Legend & promotion criteria
+
+- ✅ — verified (testnet harness running, or live Tidewave-confirmed)
+- 🎯 — committed in current milestone
+- 📋 — scoped to a future phase, not gated on a milestone
+- ❌ — out of scope; no plan to verify
+- **macro** — wrapper exists, JS-backed; behaves as well as CCXT does
+
+Promotion to 🟢: testnet harness exists **and** byte-equality vs a native signer is achievable (or explicitly waived with rationale). Promotion from 🟠 → 🟡 happens by adding a T-task; promotion from 🔵 → 🟠 happens by tier reclassification in `priv/priority_tiers.json`.
 
 ---
 

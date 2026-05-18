@@ -47,6 +47,8 @@ The public API is generated at compile time from CCXT's type definitions — **n
 
 **Scope is locked at "full unified CCXT surface."** Trade plane (`create_order`, signing, `setLeverage`, `watchMyTrades`) stays in the macro surface; verification (Phase 4 testnet harnesses + byte-equality signing comparison) gates it before mainnet. Don't propose narrowing scope based on hypothetical risk — see ROADMAP § Scope and the project memory on this.
 
+**Per-exchange coverage tiers.** The macro layer emits wrappers for every CCXT exchange; **verification** (testnets, byte-equality, native ports) is committed by tier. See [ROADMAP.md § Per-Exchange Coverage](ROADMAP.md#per-exchange-coverage) for the live matrix. Priority: Tier 1 = minimum acceptable scope (binance, bybit, okx, deribit, coinbaseexchange), Tier 2 = stretch goal (kraken, kucoin, gate, htx, bitmex, bitfinex), DEX bucket (hyperliquid, aster, lighter, derive) ranks above Tier 3. Source of truth for tier membership: `priv/priority_tiers.json`.
+
 **Companion tooling** Phase 2 leans on:
 - **In the dep tree today:** OXC (parses CCXT's `.d.ts` and `js/src/<exchange>.js` to feed `defunified` / `defendpoint`), QuickBEAM (the macro-generated functions wrap runtime calls via `CcxtOcx.Runtime` — Task 1, done).
 - **To be added when the macro that needs it lands:** NimbleOptions (validates every macro's option keyword per `~/.claude/includes/development-philosophy.md` § "Cite Ecosystem Precedents"). Add `{:nimble_options, "~> 1.x"}` to `mix.exs` as part of Task 7 (`defunified`) — the first macro to consume it.

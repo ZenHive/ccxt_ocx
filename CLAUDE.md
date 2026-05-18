@@ -76,6 +76,10 @@ mix credo --strict --format json
 mix sobelow --mark-skip-all
 ```
 
+## Pre-commit hook
+
+`.githooks/pre-commit` runs format / compile / credo / sobelow — CLI-agnostic gate for non–Claude-Code agents. Enable once per clone/worktree: `git config core.hooksPath .githooks`. Slow checks (test, dialyzer, doctor) stay in CI.
+
 ## Dependency notes
 
 - **Do not lower the `quickbeam` floor below 0.10.4.** quickbeam 0.10.3 fixed

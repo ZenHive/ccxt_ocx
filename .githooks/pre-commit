@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Pre-commit hook — fast subset of CI's harness, CLI-agnostic.
+# Enable once per clone: git config core.hooksPath .githooks
+#
+# Mirrors .github/workflows/harness.yml:
+#   mix format --check-formatted   (staged .ex/.exs only)
+#   mix compile --warnings-as-errors
+#   mix credo --strict --ignore TagTODO,TagFIXME
+#   mix sobelow --skip --exit Low
+#
+# CI runs the slow checks (test, dialyzer, doctor).
+#
+# Skip once: git commit --no-verify   (use sparingly)
+
+set -euo pipefail
+
+STAGED_ELIXIR=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ex|exs)$' || true)
+
+# No Elixir files staged — nothing to check.
+if [ -z "$STAGED_ELIXIR" ]; then
+  exit 0
+fi
+
+echo "==> mix format --check-formatted (staged files)"
+# shellcheck disable=SC2086
+mix format --check-formatted $STAGED_ELIXIR
+
+echo "==> mix compile --warnings-as-errors"
+mix compile --warnings-as-errors
+
+echo "==> mix credo --strict --ignore TagTODO,TagFIXME"
+mix credo --strict --ignore TagTODO,TagFIXME
+
+echo "==> mix sobelow --skip --exit Low"
+mix sobelow --skip --exit Low
+
+echo "==> pre-commit checks passed"

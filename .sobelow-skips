@@ -10,3 +10,19 @@ Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/bundle_su
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/declarations/compile.ex:175,6A320B6
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/bundle_surface/compile.ex:83,7F523E6
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/declarations/compile.ex:180,2BFD6B
+Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/ccxt_ocx/macros/exchange_caps.ex:59,2CAF41D
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/ccxt_ocx/declarations/compile.ex:364,4BC0873
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/ccxt_ocx/macros/exchange_caps.ex:113,762AF1D
+RCE.CodeModule: Code Execution in `Code.eval_file`,lib/ccxt_ocx/macros/exchange_caps.ex:48,771EB7E
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/macros/exchange_caps.ex:82,C3AF66
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/ccxt_ocx/macros/exchange_caps.ex:132,11EBB03
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/ccxt_ocx/macros/use.ex:191,2D34AD5
+RCE.CodeModule: Code Execution in `Code.eval_file`,lib/ccxt_ocx/macros/exchange_caps.ex:62,386C9EF
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/ccxt_ocx/declarations/compile.ex:351,55FFDC
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/macros/exchange_caps.ex:101,63D40D5
+Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/ccxt_ocx/macros/exchange_caps.ex:99,76AFBEC
+RCE.CodeModule: Code Execution in `Code.eval_file`,lib/ccxt_ocx/macros/exchange_caps.ex:68,2EF254C
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/ccxt_ocx/macros/exchange_caps.ex:153,3537A42
+Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/ccxt_ocx/macros/exchange_caps.ex:116,6637E90
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/ccxt_ocx/declarations/compile.ex:350,6743C54
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/macros/exchange_caps.ex:118,E4B883

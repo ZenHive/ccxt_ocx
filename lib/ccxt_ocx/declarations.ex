@@ -48,4 +48,14 @@ defmodule CcxtOcx.Declarations do
   @doc "Absolute path to the core Exchange.d.ts (convenience for docs / tests)."
   @spec base_dts_path() :: String.t()
   def base_dts_path, do: Compile.base_dts_path()
+
+  @doc """
+  Pure list of all known CCXT exchange ids (atoms) derived from the .d.ts files.
+
+  Zero-cost at compile time (no QuickBEAM). Consumed by `use CcxtOcx` (Task 6b)
+  for unknown-exchange validation + did-you-mean suggestions, and by Task 9
+  `defexchange` for capability gating.
+  """
+  @spec known_exchange_ids() :: [atom()]
+  def known_exchange_ids, do: Compile.known_exchange_ids()
 end

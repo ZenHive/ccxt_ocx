@@ -26,3 +26,5 @@ Traversal.FileModule: Directory Traversal in `File.write!`,lib/ccxt_ocx/macros/e
 Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/ccxt_ocx/macros/exchange_caps.ex:116,6637E90
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/ccxt_ocx/declarations/compile.ex:350,6743C54
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/macros/exchange_caps.ex:118,E4B883
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/ccxt_ocx/declarations/compile.ex:464,2159CA7
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/ccxt_ocx/declarations/compile.ex:356,40FD074

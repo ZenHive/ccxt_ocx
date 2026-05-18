@@ -22,6 +22,19 @@ the Phase 2 macro layer to consume.
 
 **Fix (shipped with Task 6b):** `exchange_id_from_path/1` previously used `Path.rootname/1`, which only strips a single extension — so `"binance.d.ts"` was parsed as `"binance.d"` instead of `"binance"`. The override-map keys (`"exchange:binance.d"`) and the `exchange_id` field on each parsed term were silently wrong. Switched to `Path.basename(p, ".d.ts")`. No consumer queried these values before Task 6b landed, so the on-disk `priv/ccxt_surface.exs` (method-name list only) was unaffected.
 
+#### Task 8: Typed structs for unified return shapes (`CcxtOcx.Ticker` et al.)
+**Completed** | [D:5/B:8/U:8 → Eff:1.6] 🚀  (v0.1)
+
+The six canonical data-plane structs that close the "raw JS map → beautiful Elixir" contract for v0.1.
+
+- New `CcxtOcx.Struct` macro — `field name, :money_string | :timestamp_ms | ..., from: "ccxtKey"` declarative syntax validated by NimbleOptions at the declaration site. Emits `defstruct`, `@type t`, and the `from_ccxt/1` hydrator with zero parser code in the call sites.
+- Six structs (`Ticker`, `OrderBook`, `Candle` (positional OHLCV), `Trade`, `Market`, `Currency`) — all money fields are strings, timestamps are integers, `info`/`fee` etc. are opaque maps for v0.1.
+- `CcxtOcx.Structs` facade (`hydrate/2`) — the single table `return_type_string → module` consumed by `defunified` (Task 7). Handles `"Trade[]"`, `"OHLCV[]"`, `Promise<Ticker>` etc.
+- OXC-powered introspection in `Declarations.Compile` (`interface_fields/1`) — the "drift gate" test parses the real `types.d.ts` and asserts declared `from:` keys exist in CCXT's interface (loud failure on bundle bump, same philosophy as Task 6).
+- Pure normalizers + doctests + edge matrix (missing/extra/nil/number→string/list-of-pairs) + full quality gates green.
+
+These structs are the return values users will actually hold in IEx/Phoenix after `use CcxtOcx, tier: :tier1`.
+
 #### Task 6b: `use CcxtOcx` — exchange-scope entrypoint
 **Completed** | [D:5/B:9/U:9 → Eff:1.8] 🚀  (v0.1)
 

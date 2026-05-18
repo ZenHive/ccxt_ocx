@@ -262,9 +262,15 @@ defmodule CcxtOcx.Declarations.Compile do
 
   defp extract_return_type(_), do: "any"
 
-  # Recursive TS type renderer — produces the strings required by acceptance.
-  # Unknown nodes produce "UNKNOWN(#{type})" so tests fail loudly instead of
-  # silently emitting garbage.
+  @doc """
+  Recursively renders a TypeScript type AST node (from OXC) back to a source-like
+  string — e.g. `Promise<Ticker>`, `OHLCV[]`, `string | number`, `"limit"`.
+
+  Used by the declaration parser to capture method param and return types in a
+  form the macro layer (`defunified`) can pattern-match on. Unknown node kinds
+  yield `"UNKNOWN(<kind>)"` so tests fail loudly rather than silently emitting
+  the wrong type.
+  """
   @spec render_type(map() | nil) :: String.t()
   def render_type(nil), do: "any"
 
@@ -426,4 +432,79 @@ defmodule CcxtOcx.Declarations.Compile do
 
     :ok
   end
+
+  # --- Task 8: interface introspection for typed struct drift guard ------------
+
+  @types_dts "node_modules/ccxt/js/src/base/types.d.ts"
+
+  @doc """
+  Absolute path to the CCXT core types declaration (contains Ticker, OrderBook, Trade, etc.).
+  """
+  @spec types_dts_path() :: String.t()
+  def types_dts_path do
+    Path.join(File.cwd!(), @types_dts)
+  end
+
+  @doc """
+  Parse the types.d.ts and return the field list for a named interface
+  (e.g. "Ticker", "OrderBook", "Trade", "MarketInterface", "CurrencyInterface").
+
+  Each field is `%{name: String.t(), type: String.t(), optional: boolean()}` using
+  the same `render_type/1` as the method parser.
+  """
+  # sobelow_skip ["Traversal.FileModule"]
+  @spec interface_fields(String.t()) :: [map()]
+  def interface_fields(interface_name) when is_binary(interface_name) do
+    path = types_dts_path()
+
+    if !File.exists?(path) do
+      raise "CCXT types.d.ts not found at #{path}. Run `mix npm.install`."
+    end
+
+    source = File.read!(path)
+
+    ast =
+      case OXC.parse(source, Path.basename(path)) do
+        {:ok, a} -> a
+        {:error, e} -> raise "OXC parse failed on types.d.ts: #{inspect(e)}"
+      end
+
+    collected =
+      OXC.collect(ast, &collect_interface_fields(&1, interface_name))
+
+    # collect_interface_fields returns {:keep, [field, ...]} for the matching interface
+    fields = List.flatten(collected)
+    Enum.sort_by(fields, & &1.name)
+  end
+
+  defp collect_interface_fields(node, wanted_name) do
+    case node do
+      %{type: :ts_interface_declaration, id: %{name: ^wanted_name}, body: %{body: members}} ->
+        fields =
+          for m <- members,
+              key = get_in(m, [:key, :name]) || get_in(m, [:name]),
+              not is_nil(key) do
+            opt = Map.get(m, :optional, false) || (get_in(m, [:key, :optional]) || false)
+            type_node = get_in(m, [:typeAnnotation, :typeAnnotation]) || get_in(m, [:typeAnnotation])
+
+            %{
+              name: key,
+              type: render_type(type_node),
+              optional: !!opt
+            }
+          end
+
+        {:keep, fields}
+
+      _ ->
+        :skip
+    end
+  end
+
+  # Public helper used by Task 8 tests to list the 6 core interfaces we care about.
+  @core_struct_interfaces ~w(Ticker OrderBook Trade MarketInterface CurrencyInterface)
+
+  @doc "The interface names in types.d.ts that back the v0.1 typed structs."
+  @spec core_struct_interfaces() :: [String.t()]
+  def core_struct_interfaces, do: @core_struct_interfaces
 end

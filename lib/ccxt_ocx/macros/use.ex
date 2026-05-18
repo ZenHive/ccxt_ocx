@@ -246,5 +246,6 @@ defmodule CcxtOcx.Macros.Use do
   @doc """
   Returns the NimbleOptions schema (useful for docs and tests).
   """
+  @spec schema() :: NimbleOptions.t()
   def schema, do: @schema
 end

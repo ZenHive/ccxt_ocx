@@ -11,6 +11,10 @@ defmodule CcxtOcx do
   Everything else (per-exchange modules, unified methods, typed structs) is
   generated at compile time from CCXT's own TypeScript declarations.
 
+  The six core data-plane structs (`CcxtOcx.Ticker`, `OrderBook`, `Candle`,
+  `Trade`, `Market`, `Currency`) are always available (no `use` required) and
+  are the return shapes for the macro-generated fetch/watch wrappers.
+
   ## Why explicit scope?
 
   The CCXT surface is ~150 unified methods × 100+ exchanges. Generating wrappers

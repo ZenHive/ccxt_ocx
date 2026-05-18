@@ -40,9 +40,9 @@ defmodule CcxtOcx.MixProject do
   defp deps do
     [
       # Volt — JS on the BEAM (CCXT is a JS library)
-      {:oxc, "~> 0.12.1"},
-      {:quickbeam, "~> 0.10.12"},
-      {:npm, "~> 0.7.1"},
+      {:oxc, "~> 0.13.0"},
+      {:quickbeam, "~> 0.10.13"},
+      {:npm, "~> 0.7.4"},
 
       # Pooling — long-lived CCXT runtimes (Task 3)
       {:nimble_pool, "~> 1.1"},
@@ -74,7 +74,7 @@ defmodule CcxtOcx.MixProject do
       # Code analysis
       {:ex_dna, "~> 1.5.1", only: [:dev, :test], runtime: false},
       {:ex_ast, "~> 0.12.0", only: [:dev, :test], runtime: false},
-      {:reach, "~> 2.3.4", only: [:dev, :test], runtime: false},
+      {:reach, "~> 2.4.0", only: [:dev, :test], runtime: false},
 
       # Tidewave (non-Phoenix). Bandit is also kept in :test so PromEx's
       # transitively-optional `:plug` dep is available when the optional

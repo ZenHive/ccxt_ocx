@@ -81,18 +81,37 @@ defmodule CcxtOcx.Macros.UseTest do
 
   # We define a tiny "consumer" module inside the test so that the `use` runs
   # at test-compile time and the generated CcxtOcx.* modules become visible.
+  # This now triggers real (cached) probes via defexchange, so the describe
+  # block is tagged :integration.
+  @moduletag :integration
+
   defmodule ScopedConsumer do
     @moduledoc false
     use CcxtOcx, exchanges: [:deribit, :binance]
   end
 
-  test "use emits real per-exchange modules with the expected contract" do
+  test "use emits real per-exchange modules with the Task 9 capability surface" do
     assert Code.ensure_loaded?(CcxtOcx.Deribit)
     assert Code.ensure_loaded?(CcxtOcx.Binance)
 
     assert CcxtOcx.Deribit.__exchange_id__() == :deribit
     assert CcxtOcx.Binance.__exchange_id__() == :binance
-    assert function_exported?(CcxtOcx.Deribit, :__generated_by_task_6b__, 0)
+
+    # Task 9 surface (replaces the old 6b marker)
+    refute function_exported?(CcxtOcx.Deribit, :__generated_by_task_6b__, 0)
+    assert function_exported?(CcxtOcx.Binance, :has?, 1)
+    assert CcxtOcx.Binance.has?("fetchTicker") == true
+    assert CcxtOcx.Binance.has?("createOrder") == true
+    assert CcxtOcx.Binance.has?("nonexistentMethod") == false
+    assert is_map(CcxtOcx.Binance.urls())
+    assert is_map(CcxtOcx.Binance.timeframes())
+    assert is_struct(CcxtOcx.Binance.exchange(), CcxtOcx.Binance.Exchange)
+
+    # has_table available for Task 7 compile-time gating
+    has = CcxtOcx.Binance.has_table()
+    assert is_map(has)
+    assert has["fetchTicker"] in [true, "emulated"]
+
     # Per-module emission is a global side-effect on the BEAM, so refuting a
     # specific module's existence would be brittle across test files (any future
     # `use CcxtOcx, tier: :tier1` in another suite would load the same modules).

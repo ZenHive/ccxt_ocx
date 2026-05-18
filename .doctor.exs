@@ -1,10 +1,13 @@
 %Doctor.Config{
   ignore_modules: [
-    # Doctor (as of 0.23) does not recognize `@doc`/`@spec` on `defmacro` —
-    # `Code.fetch_docs(CcxtOcx.Struct)` confirms every macro IS documented
-    # and spec'd, but Doctor's parser only credits `def`. Exempt this single
-    # macro-DSL module; the rest of the codebase stays at the 100% bar.
-    CcxtOcx.Struct
+    # Doctor (as of 0.23) does not recognize `@doc`/`@spec` on `defmacro` or
+    # on `def`s emitted from inside `quote` blocks — `Code.fetch_docs/1` on
+    # consumer modules confirms every emitted function IS documented and
+    # spec'd, but Doctor's parser walks source and only credits inline `def`.
+    # Exempt these macro-DSL modules; the rest of the codebase stays at the
+    # 100% bar.
+    CcxtOcx.Struct,
+    CcxtOcx.Macros.Exchange
   ],
   ignore_paths: [],
   min_module_doc_coverage: 100,

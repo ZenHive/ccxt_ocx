@@ -48,6 +48,7 @@ The single user-facing macro. Three supported forms gate all downstream codegen:
 - Emits real `CcxtOcx.Binance`, `CcxtOcx.Deribit`, … modules with `__exchange_id__/0` and clear handoff docs for `defunified`/`defexchange`.
 - `CcxtOcx.Macros.ExchangeCaps` introduced (probe helper + `priv/exchange_caps/<id>.exs` cache contract for Task 9; pure `known_exchange_ids/0` via Declarations).
 - 9 new tests (resolver + live emission) + all quality gates green. Macro contract stable for the rest of v0.1.
+
 - Post-staged-review polish (all 6 findings from commit-review addressed before landing):
   - Mutual-exclusivity of `:exchanges` + `:tier` now enforced with clear `CompileError` + test.
   - Removed partial `resolved_exchange_list/1` helper (inlined the only call site).
@@ -55,6 +56,18 @@ The single user-facing macro. Three supported forms gate all downstream codegen:
   - Bare-use policy check re-ordered after `[]` so unknown-key-only calls get precise Nimble "unknown options" errors.
   - `exchange_id_from_path/1` now returns `atom()` (consistent with public API); callers and docs updated.
   - `caps_path/1` is now pure; `mkdir_p!` moved into the write-only path in `build_and_cache!`.
+
+#### Task 9: `defexchange` macro (per-exchange capability metadata)
+**Completed** | [D:6/B:7/U:6 → Eff:1.08] 📋  (v0.1)
+
+Per-exchange module emitter. For every venue declared via `use CcxtOcx`, the generated `CcxtOcx.<Camel>` now carries a compile-time snapshot of `has`, `urls`, `timeframes`, `rateLimit`, `options.defaultType` as both functions and a struct.
+
+- New `CcxtOcx.Macros.Exchange` + `defexchange/1` macro — invoked from inside the modules emitted by `use CcxtOcx.__using__/1`. Calls `ExchangeCaps.fetch_or_build/1` (cached), materializes `@has_table` + `has?/1`/`has_table/0`, the zero-arity accessors, `caps/0`, `exchange/0`, and a nested `Exchange` struct.
+- `@external_resource` wiring on every generated module so `mix ccxt.verify_bundle --accept` cache refreshes force recompilation.
+- `has?/1` takes a binary CCXT key only (atoms rejected at the type level to avoid the snake_case-vs-camelCase trap); pass `"fetchTicker"` / `"createOrder"` / `"option"`. `"emulated"` treated as supported. The table is the exact data Task 7 (`defunified`) will use for capability-gated emission; the snake_case→camelCase mapping for user-facing helpers lives in the wrapper layer Task 7 emits.
+- Tidewave dogfooding (binance + deribit + okx) confirmed complex surfaces (Deribit `fetchOptionChain`/`"option"`, etc.) are captured correctly.
+- Old `__generated_by_task_6b__/0` marker removed; emission test now asserts the full Task 9 surface and is properly `:integration` tagged.
+- All gates (compile --werror, test.json 207 passed, dialyzer 0 warnings, credo, doctor docs present) green. Handoff contract for Task 7 fulfilled: the per-exchange modules are now first-class compile-time queryable descriptors.
 
 ### Phase 5: Production Hardening
 

@@ -25,7 +25,7 @@
 
 **Last shipped:** no recent shipments
 
-**Up next:** Task N8 — CCXT-drift policy [D:3/B:7/U:6 → Eff:2.17] 🎯
+**Up next:** Task 7 — `defunified` macro [D:7/B:10/U:9 → Eff:1.36] 📋
 <!-- FOCUS:END -->
 
 ---
@@ -53,7 +53,7 @@
 | Task 6b | ✅ | 🎁 **macros** · 🚀 **v0_1** · `use CcxtOcx` — exchange-scope entrypoint [D:5/B:9/U:9 → Eff:1.8] 🚀 |
 | Task 7 | ⬜ | 🎁 **macros** · 🚀 **v0_1** · `defunified` macro [D:7/B:10/U:9 → Eff:1.36] 📋 |
 | Task 8 | ✅ | 🎁 **macros** · 🚀 **v0_1** · Typed structs for unified return shapes (with declarative field mapping) [D:5/B:8/U:8 → Eff:1.6] 🚀 |
-| Task 9 | ⬜ | 🎁 **macros** · 🚀 **v0_1** · `defexchange` macro [D:6/B:7/U:6 → Eff:1.08] 📋 |
+| Task 9 | ✅ | 🎁 **macros** · 🚀 **v0_1** · `defexchange` macro [D:6/B:7/U:6 → Eff:1.08] 📋 |
 | Task 10 | ⬜ | 🎁 **macros** · Symbol normalization layer [D:6/B:6/U:5 → Eff:0.92] ⚠️ |
 | Task A3 | ⬜ | 🎁 **macros** · Audit-surfaced: extract shared QuickBEAM probe timeout constant [D:2/B:3/U:3 → Eff:1.5] 🚀 |
 <!-- TASKS:END -->

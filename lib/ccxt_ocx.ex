@@ -46,8 +46,8 @@ defmodule CcxtOcx do
     # in a compile unit "win" so two consumer modules can both declare overlapping
     # scopes without triggering Elixir's module-redefinition warning (which fails
     # under --warnings-as-errors). All emitted modules for the same exchange id
-    # are byte-identical in v0.1; Task 9 will revisit ownership when per-exchange
-    # capability tables ship.
+    # are byte-identical; the first declaration owns the (identical) capability
+    # snapshot produced by `defexchange`.
     per_exchange_modules =
       for id <- scope.exchanges do
         module_name = Module.concat(__MODULE__, Macro.camelize(to_string(id)))
@@ -58,14 +58,17 @@ defmodule CcxtOcx do
             defmodule unquote(module_name) do
               @moduledoc unquote(mod_doc)
 
+              alias CcxtOcx.Macros.Exchange
+
+              require Exchange
+
               @doc "The canonical CCXT exchange id (atom) for this generated module."
               def __exchange_id__, do: unquote(id)
 
-              # TODO(Task 9): replace `__generated_by_task_6b__/0` with real
-              # `defexchange`-emitted capability surface (has?/1, urls/0, etc.).
-              # Tests and the Task 7 `defunified` integration use this marker
-              # to detect 6b-stub modules vs Task 9-enriched ones.
-              def __generated_by_task_6b__, do: true
+              # Task 9 (`defexchange`) — emits has?/1, urls/0, timeframes/0, the
+              # Exchange struct, @has_table (for Task 7 gating), and @external_resource
+              # wiring back to the caps cache. Runs at compile time of the consumer.
+              Exchange.defexchange(unquote(id))
             end
           end
         end
@@ -91,10 +94,11 @@ defmodule CcxtOcx do
     Source of truth for this exchange's surface lives in
     `CcxtOcx.Declarations` + the committed `priv/ccxt_surface.exs`.
 
-    Per-exchange capability data (`has`, `urls`, `timeframes`, ...) will be
+    Per-exchange capability data (`has`, `urls`, `timeframes`, ...) is
     populated by Task 9 (`defexchange`) via `CcxtOcx.Macros.ExchangeCaps`
     and cached at `priv/exchange_caps/#{id}.exs`.
-    For now only `__exchange_id__/0` and a generation marker are present.
+    The generated module now exposes `has?/1`, `urls/0`, `timeframes/0`,
+    the `Exchange` struct, and a compile-time `@has_table` for Task 7.
     """
   end
 end

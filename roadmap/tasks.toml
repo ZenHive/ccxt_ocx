@@ -255,6 +255,7 @@ bundle = "macros"
 milestone = "v0_1"
 status = "pending"
 title = "`defunified` macro"
+model = "claude-opus-4-7"
 scores = { d = 7, b = 10, u = 9 }
 depends_on = ["6", "6b", "8"]
 body = """
@@ -372,6 +373,7 @@ bundle = "streaming"
 milestone = "v1_0"
 status = "pending"
 title = "`defstreaming` macro"
+model = "claude-opus-4-7"
 scores = { d = 7, b = 9, u = 8 }
 depends_on = ["7"]
 body = """
@@ -460,6 +462,7 @@ bundle = "trade-verify"
 milestone = "v1_0"
 status = "pending"
 title = "Signed-payload byte-comparison harness"
+model = "claude-opus-4-7"
 scores = { d = 7, b = 9, u = 8 }
 body = """
 **Load-bearing for the native migration, not optional.** Where a native Elixir signer exists for a venue (e.g. Binance HMAC is trivially expressible in pure Elixir), generate the same order via both the QuickBEAM-CCXT path and the native path, and assert byte equality of the signed payload + identical headers. Run on every CI build. This is the *only* mechanism that catches native-signer drift from CCXT — once we move signed methods to native (N6, N7), T4 is what gates the flip from `:js` → `:native` in routing config. Score raised from earlier draft because committing to native makes byte-equality the trade-plane safety contract, not a nice-to-have.
@@ -550,6 +553,7 @@ bundle = "production"
 milestone = "v1_0"
 status = "pending"
 title = "Hoist rate-limit + nonce state into Elixir"
+model = "claude-opus-4-7"
 scores = { d = 7, b = 9, u = 8 }
 depends_on = ["3", "16"]
 body = """
@@ -646,6 +650,7 @@ phase = 7
 bundle = "native"
 status = "pending"
 title = "`defendpoint` macro + CCXT-JS source extractor"
+model = "claude-opus-4-7"
 scores = { d = 7, b = 9, u = 8 }
 scored_at = "2026-05-16"
 body = """
@@ -692,6 +697,7 @@ phase = 7
 bundle = "native"
 status = "pending"
 title = "Conformance harness"
+model = "claude-opus-4-7"
 scores = { d = 6, b = 9, u = 9 }
 scored_at = "2026-05-16"
 depends_on = ["N1", "N2", "T4"]
@@ -720,6 +726,7 @@ phase = 7
 bundle = "native"
 status = "pending"
 title = "Native Binance — WS public"
+model = "claude-opus-4-7"
 scores = { d = 7, b = 8, u = 6 }
 scored_at = "2026-05-16"
 depends_on = ["N0", "N3"]
@@ -733,6 +740,7 @@ phase = 7
 bundle = "native"
 status = "pending"
 title = "Native Binance — REST private (signed)"
+model = "claude-opus-4-7"
 scores = { d = 8, b = 9, u = 7 }
 scored_at = "2026-05-16"
 depends_on = ["N0", "N3", "T4"]

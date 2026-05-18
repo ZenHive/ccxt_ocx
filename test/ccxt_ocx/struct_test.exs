@@ -2,7 +2,9 @@ defmodule CcxtOcx.StructTest do
   use ExUnit.Case, async: true
 
   alias CcxtOcx.Candle
+  alias CcxtOcx.Currency
   alias CcxtOcx.Declarations.Compile
+  alias CcxtOcx.Market
   alias CcxtOcx.OrderBook
   alias CcxtOcx.Struct
   alias CcxtOcx.Structs
@@ -116,7 +118,8 @@ defmodule CcxtOcx.StructTest do
             "Ticker" -> Enum.map(Ticker.__ccxt_fields__(), fn {_, _, f} -> f end)
             "OrderBook" -> Enum.map(OrderBook.__ccxt_fields__(), fn {_, _, f} -> f end)
             "Trade" -> Enum.map(Trade.__ccxt_fields__(), fn {_, _, f} -> f end)
-            # MarketInterface / CurrencyInterface are covered by Market/Currency
+            "MarketInterface" -> Enum.map(Market.__ccxt_fields__(), fn {_, _, f} -> f end)
+            "CurrencyInterface" -> Enum.map(Currency.__ccxt_fields__(), fn {_, _, f} -> f end)
             _ -> []
           end
 

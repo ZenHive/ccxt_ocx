@@ -45,7 +45,11 @@ Full event contract and handler examples live in `CcxtOcx.Telemetry`.
 ### PromEx (Prometheus / Grafana)
 
 `ccxt_ocx` ships a first-class [PromEx](https://hex.pm/packages/prom_ex)
-plugin that maps every event above to Prometheus metrics with zero glue.
+plugin that maps the runtime-memory, REST `:stop`/`:exception`, and
+WS `:tick` events above to Prometheus metrics with zero glue.
+Lifecycle events (`:rest, :start`, `:runtime, :start | :stop`) are
+captured via duration distributions on the `:stop` counterpart rather
+than separate metric series.
 PromEx is an **optional dependency** — consumers add it to their own app:
 
 ```elixir

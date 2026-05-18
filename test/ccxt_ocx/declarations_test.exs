@@ -110,8 +110,13 @@ defmodule CcxtOcx.DeclarationsTest do
 
     @tag :integration
     test "exchange and pro globs return a plausible number of files" do
-      assert length(Compile.exchange_dts_paths()) > 50
-      assert length(Compile.pro_dts_paths()) > 50
+      # Non-empty + presence of a known-canonical exchange is sufficient.
+      # A `> 50` threshold would track upstream CCXT's exchange catalog
+      # churn instead of catching real parser-glob regressions.
+      assert Compile.exchange_dts_paths() != []
+      assert Compile.pro_dts_paths() != []
+      assert Enum.any?(Compile.exchange_dts_paths(), &String.ends_with?(&1, "binance.d.ts"))
+      assert Enum.any?(Compile.pro_dts_paths(), &String.ends_with?(&1, "binance.d.ts"))
     end
   end
 end

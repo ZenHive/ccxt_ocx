@@ -60,8 +60,13 @@ defmodule CcxtOcx.DevTelemetry do
                     default: Map.keys(@events)
                   ],
                   io_device: [
-                    type: :any,
-                    default: :stdio
+                    type: {:or, [:atom, :pid]},
+                    default: :stdio,
+                    doc:
+                      "Where `print: true` writes. Must be a value `IO.puts/2` accepts as its " <>
+                        "first argument — an atom (`:stdio`, `:stderr`, a registered name) or a " <>
+                        "pid. Validated up front so an invalid device can't crash the telemetry " <>
+                        "handler on first emission (which `:telemetry` then silently detaches)."
                   ]
                 )
 

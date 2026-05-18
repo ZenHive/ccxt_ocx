@@ -39,8 +39,17 @@ defmodule CcxtOcx.Structs do
   """
   @spec hydrate(return_type(), raw()) :: term()
   def hydrate(type_str, raw) when is_binary(type_str) do
-    if String.contains?(type_str, "[]") do
-      base = String.replace(type_str, ~r/\[\].*$/, "")
+    # Strip Promise<...> or other single-wrapper first so `Promise<Trade[]>`
+    # collapses to `Trade[]` BEFORE the array branch tries to strip `[]>`.
+    # Earlier shape stripped `[].*$` first, leaving `"Promise<Trade"` and
+    # silently returning raw data for every `Promise<X[]>` return type.
+    unwrapped =
+      type_str
+      |> String.replace(~r/^Promise<(.+)>$/, "\\1")
+      |> String.replace(~r/^(.+)<(.+)>$/, "\\2")
+
+    if String.ends_with?(unwrapped, "[]") do
+      base = String.replace_suffix(unwrapped, "[]", "")
       mod = Map.get(@registry, base)
 
       if mod && raw do
@@ -49,13 +58,7 @@ defmodule CcxtOcx.Structs do
         raw
       end
     else
-      # strip Promise<...> or other wrappers
-      base =
-        type_str
-        |> String.replace(~r/^Promise<(.+)>$/, "\\1")
-        |> String.replace(~r/^(.+)<(.+)>$/, "\\2")
-
-      case Map.get(@registry, base) do
+      case Map.get(@registry, unwrapped) do
         nil -> raw
         mod -> mod.from_ccxt(raw)
       end

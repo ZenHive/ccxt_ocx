@@ -860,3 +860,63 @@ implemented = "Shipped lib/ccxt_ocx/dev_telemetry.ex (Agent-backed dogfooding mo
 created_at = "2026-05-17"
 scored_at = "2026-05-17"
 done_at = "2026-05-17"
+
+[[task]]
+id = "A1"
+phase = 6
+bundle = "dx"
+status = "pending"
+title = "Audit-surfaced: DevTelemetry vs Telemetry event-registry drift"
+scores = { d = 3, b = 4, u = 5 }
+body = """
+`CcxtOcx.DevTelemetry` (`lib/ccxt_ocx/dev_telemetry.ex:45-51`) hard-codes its own `@events` table duplicating the event-name knowledge already in `CcxtOcx.Telemetry`. New event families landing in Telemetry won't be picked up by DevTelemetry's `watch/0` without a parallel edit.
+
+Codex (audit-review second-opinion, 2026-05-18) flagged Pri 3 missing-extraction. The fix is one of:
+
+1. Add a public registry-style accessor to `CcxtOcx.Telemetry` (e.g. `event_registry/0 :: %{key => event_name}`) and have DevTelemetry consume it.
+2. Keep two declarations but add a compile-time guard test asserting key parity.
+
+Decision belongs to the user — option 1 is the cleaner refactor but touches the public Telemetry surface, which Phase 5/PromEx already depend on.
+
+Filed by audit-review against commit 8510bde on 2026-05-18; see `.audit/8510bde-feat-dev-telemetry-dogfoodi.md`.
+"""
+created_at = "2026-05-18"
+scored_at = "2026-05-18"
+
+[[task]]
+id = "A2"
+phase = 6
+bundle = "dx"
+status = "pending"
+title = "Audit-surfaced: doc-completeness audit on `use CcxtOcx` + generated modules"
+scores = { d = 3, b = 5, u = 5 }
+body = """
+Codex (audit-review, 2026-05-18) flagged that public `__using__/1` (lib/ccxt_ocx.ex:39) and the generated `__exchange_id__/0` / `__generated_by_task_6b__/0` introspection functions emitted by the macro lack `@doc` / `@spec`. `mix doctor` is currently green at 100% — Doctor's parser doesn't fully credit `defmacro` (the documented limitation `.doctor.exs` ignores `CcxtOcx.Struct` for) — so a green Doctor doesn't prove the docs are present.
+
+Per AGENTS.md: "Never use `@doc false` as a workaround to make `mix doctor` pass" and "real `@doc` and `@spec` are mandatory on all public functions and macros". Do a focused pass:
+
+1. Audit `use CcxtOcx` macro: real `@doc`, examples, `@spec`.
+2. Audit the generated `__exchange_id__/0` + `__generated_by_task_6b__/0` functions — emit doc/spec inside the `quote do ... end`.
+3. Confirm `Code.fetch_docs(...)` reports what we expect for each public surface.
+
+Filed by audit-review against commit 8da4032 on 2026-05-18; see `.audit/8da4032-feat-use-ccxtocx-exchange-sc.md`.
+"""
+created_at = "2026-05-18"
+scored_at = "2026-05-18"
+
+[[task]]
+id = "A3"
+phase = 2
+bundle = "macros"
+status = "pending"
+title = "Audit-surfaced: extract shared QuickBEAM probe timeout constant"
+scores = { d = 2, b = 3, u = 3 }
+body = """
+The 5_000 ms JS probe timeout is hardcoded in `lib/ccxt_ocx/macros/exchange_caps.ex:192` AND in `CcxtOcx.BundleSurface.Compile` (per Codex audit-review second-opinion, 2026-05-18). Trivial extraction: a `@probe_timeout_ms 5_000` module attribute in a shared module (`CcxtOcx.Runtime` or a `CcxtOcx.Macros.Probe` helper), referenced from both call sites.
+
+Low-priority cosmetic refactor — file so it doesn't drift further as more macro-time probes land in Phase 2/7.
+
+Filed by audit-review against commit 8da4032 on 2026-05-18; see `.audit/8da4032-feat-use-ccxtocx-exchange-sc.md`.
+"""
+created_at = "2026-05-18"
+scored_at = "2026-05-18"

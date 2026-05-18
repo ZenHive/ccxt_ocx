@@ -60,28 +60,15 @@ defmodule CcxtOcx.Struct do
   """
   @spec field(atom(), tag(), keyword()) :: Macro.t()
   defmacro field(name, type, opts) when is_atom(name) do
+    from = Keyword.get(opts, :from, Atom.to_string(name))
+
     # Validate immediately so unknown tags fail at the declaration site with a
     # good Nimble error (not a cryptic macro expansion failure later).
-    _ = NimbleOptions.validate!([name: name, type: type, from: opts[:from]], @field_schema)
-
-    from = Keyword.get(opts, :from, Atom.to_string(name))
+    # Default `from:` is applied above so the validator never sees a nil.
+    _ = NimbleOptions.validate!([name: name, type: type, from: from], @field_schema)
 
     quote do
       @ccxt_fields {unquote(name), unquote(type), unquote(from)}
-    end
-  end
-
-  @doc """
-  Two-argument convenience that defaults `from:` to `Atom.to_string(name)`.
-
-  Equivalent to `field(name, type, [])`. Most call sites pass `from:` explicitly,
-  but the two-arg form is useful when the Elixir field name already matches the
-  CCXT key (e.g. `field :symbol, :string`).
-  """
-  @spec field(atom(), tag()) :: Macro.t()
-  defmacro field(name, type) when is_atom(name) do
-    quote do
-      CcxtOcx.Struct.field(unquote(name), unquote(type), [])
     end
   end
 

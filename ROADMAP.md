@@ -55,6 +55,7 @@
 | Task 8 | ✅ | 🎁 **macros** · 🚀 **v0_1** · Typed structs for unified return shapes (with declarative field mapping) [D:5/B:8/U:8 → Eff:1.6] 🚀 |
 | Task 9 | ⬜ | 🎁 **macros** · 🚀 **v0_1** · `defexchange` macro [D:6/B:7/U:6 → Eff:1.08] 📋 |
 | Task 10 | ⬜ | 🎁 **macros** · Symbol normalization layer [D:6/B:6/U:5 → Eff:0.92] ⚠️ |
+| Task A3 | ⬜ | 🎁 **macros** · Audit-surfaced: extract shared QuickBEAM probe timeout constant [D:2/B:3/U:3 → Eff:1.5] 🚀 |
 <!-- TASKS:END -->
 
 ---
@@ -117,6 +118,8 @@
 | Task 19 | ⬜ | 🎁 **dx** · Descripex annotations on the public API [D:3/B:5/U:4 → Eff:1.5] 🚀 |
 | Task 20 | 🔄 | 🎁 **dx** · Tidewave examples [D:2/B:4/U:5 → Eff:2.25] 🎯 |
 | Task 22 | ✅ | 🎁 **dx** · Dev telemetry dogfooding loop (CcxtOcx.DevTelemetry) [D:2/B:5/U:8 → Eff:3.25] 🎯 |
+| Task A1 | ⬜ | 🎁 **dx** · Audit-surfaced: DevTelemetry vs Telemetry event-registry drift [D:3/B:4/U:5 → Eff:1.5] 🚀 |
+| Task A2 | ⬜ | 🎁 **dx** · Audit-surfaced: doc-completeness audit on `use CcxtOcx` + generated modules [D:3/B:5/U:5 → Eff:1.67] 🚀 |
 <!-- TASKS:END -->
 
 ---

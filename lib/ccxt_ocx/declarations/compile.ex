@@ -341,14 +341,14 @@ defmodule CcxtOcx.Declarations.Compile do
 
   # --- Helpers ----------------------------------------------------------------
 
-  @doc false
-  # Public-for-tests but NOT a runtime API. Compile-time helper that maps a
-  # per-exchange .d.ts path (discovered by `exchange_dts_paths/0`, never user
-  # input) to its exchange id atom. Do NOT call with arbitrary strings at
-  # runtime — `String.to_atom/1` on unbounded inputs is a DoS vector. Use
-  # `known_exchange_ids/0` for the bounded id set instead.
+  # Compile-time helper that maps a per-exchange .d.ts path (discovered by
+  # `exchange_dts_paths/0`, never user input) to its exchange id atom.
+  # Private so `String.to_atom/1` is not reachable from runtime code paths —
+  # all current call sites are in this module and feed it the discovered .d.ts
+  # paths directly. Use `known_exchange_ids/0` for the bounded id set if
+  # something external needs the list.
   @spec exchange_id_from_path(String.t()) :: atom()
-  def exchange_id_from_path(path) do
+  defp exchange_id_from_path(path) do
     # Path.rootname("foo.d.ts") == "foo.d" — we must strip the .d.ts suffix explicitly.
     path
     |> Path.basename()

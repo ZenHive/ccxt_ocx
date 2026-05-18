@@ -73,6 +73,24 @@ if Code.ensure_loaded?(PromEx.Plugin) do
 
     alias CcxtOcx.Telemetry, as: T
 
+    @opts_schema NimbleOptions.new!(
+                   pool: [
+                     type: :atom,
+                     doc:
+                       "Name (or PID) of a `CcxtOcx.RuntimePool` to poll for memory snapshots. " <>
+                         "Omit to disable polling — event metrics still apply."
+                   ],
+                   poll_rate: [
+                     type: :pos_integer,
+                     default: 5_000,
+                     doc:
+                       "How often, in milliseconds, to call `CcxtOcx.RuntimePool.memory/1` " <>
+                         "when `:pool` is set. Validated at compile time so that `0` / nil / " <>
+                         "negatives can't reach `telemetry_poller` (which requires a positive " <>
+                         "integer period)."
+                   ]
+                 )
+
     @impl true
     def event_metrics(_opts) do
       [
@@ -84,9 +102,11 @@ if Code.ensure_loaded?(PromEx.Plugin) do
 
     @impl true
     def polling_metrics(opts) do
+      opts = NimbleOptions.validate!(opts, @opts_schema)
+
       case Keyword.fetch(opts, :pool) do
         {:ok, pool} ->
-          poll_rate = Keyword.get(opts, :poll_rate, 5_000)
+          poll_rate = Keyword.fetch!(opts, :poll_rate)
 
           [
             Polling.build(

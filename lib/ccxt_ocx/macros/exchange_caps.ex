@@ -39,7 +39,6 @@ defmodule CcxtOcx.Macros.ExchangeCaps do
   consuming modules so that a regenerated caps file forces recompilation.
   """
 
-
   alias CcxtOcx.Declarations
 
   @cache_dir "priv/exchange_caps"

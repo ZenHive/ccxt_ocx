@@ -335,13 +335,12 @@ defmodule CcxtOcx.Declarations.Compile do
 
   # --- Helpers ----------------------------------------------------------------
 
-  @doc """
-  Returns the exchange id (as atom) derived from a per-exchange .d.ts path.
-
-  Public so Task 6b's `use CcxtOcx` validator (and later Task 9) can build a
-  cheap, pure list of known CCXT exchange ids without spinning a QuickBEAM
-  runtime.
-  """
+  @doc false
+  # Public-for-tests but NOT a runtime API. Compile-time helper that maps a
+  # per-exchange .d.ts path (discovered by `exchange_dts_paths/0`, never user
+  # input) to its exchange id atom. Do NOT call with arbitrary strings at
+  # runtime — `String.to_atom/1` on unbounded inputs is a DoS vector. Use
+  # `known_exchange_ids/0` for the bounded id set instead.
   @spec exchange_id_from_path(String.t()) :: atom()
   def exchange_id_from_path(path) do
     # Path.rootname("foo.d.ts") == "foo.d" — we must strip the .d.ts suffix explicitly.

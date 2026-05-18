@@ -53,9 +53,15 @@ defmodule CcxtOcx.Macros.ExchangeCaps do
 
   The map is written as a pretty-printed .exs file so it is human-readable and
   `Code.eval_file/1` friendly. The file is the artifact that Task 9 will consume.
+
+  Raises `ArgumentError` if `id` is not a known CCXT exchange id (the set is
+  `known_exchange_ids/0`). This is the trust boundary — `id` is interpolated
+  into a filesystem path and the resulting file is passed to `Code.eval_file/1`,
+  so the caller's atom must come from the closed CCXT-derived set.
   """
   @spec fetch_or_build(atom()) :: map()
   def fetch_or_build(id) when is_atom(id) do
+    validate_known_id!(id)
     path = caps_path(id)
 
     if File.exists?(path) do
@@ -63,6 +69,17 @@ defmodule CcxtOcx.Macros.ExchangeCaps do
       term
     else
       build_and_cache!(id, path)
+    end
+  end
+
+  @spec validate_known_id!(atom()) :: :ok
+  defp validate_known_id!(id) do
+    if id in known_exchange_ids() do
+      :ok
+    else
+      raise ArgumentError,
+            "unknown exchange id: #{inspect(id)} — must be one of " <>
+              "CcxtOcx.Macros.ExchangeCaps.known_exchange_ids/0"
     end
   end
 
@@ -129,7 +146,12 @@ defmodule CcxtOcx.Macros.ExchangeCaps do
         version: data["version"]
       }
 
-      File.write!(path, inspect(term, pretty: true, limit: :infinity) <> "\n")
+      # Atomic write: stage to a temp sibling, then rename. Prevents a concurrent
+      # reader (Code.eval_file/1 in fetch_or_build/1) from observing a partial
+      # file. POSIX rename is atomic within the same directory.
+      tmp_path = path <> ".tmp.#{System.unique_integer([:positive])}"
+      File.write!(tmp_path, inspect(term, pretty: true, limit: :infinity) <> "\n")
+      File.rename!(tmp_path, path)
       term
     after
       QuickBEAM.stop(rt)

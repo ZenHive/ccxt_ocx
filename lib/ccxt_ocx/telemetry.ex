@@ -141,28 +141,37 @@ defmodule CcxtOcx.Telemetry do
   end
 
   # ------------------------------------------------------------------
-  # Internal accessors for Runtime / Pool (kept small)
+  # Internal event-name accessors. Public-by-necessity so sibling
+  # modules (Runtime / RuntimePool / PromEx.Plugin) can reference the
+  # same event-name constants. Leading underscore + @doc false signals
+  # "not part of the consumer contract" and blocks `import`.
   # ------------------------------------------------------------------
 
   @doc false
-  @spec __rest_start__() :: [:ccxt_ocx | :rest | :start, ...]
-  def __rest_start__, do: @rest_start
+  @spec _rest_start() :: [:ccxt_ocx | :rest | :start, ...]
+  def _rest_start, do: @rest_start
+
   @doc false
-  @spec __rest_stop__() :: [:ccxt_ocx | :rest | :stop, ...]
-  def __rest_stop__, do: @rest_stop
+  @spec _rest_stop() :: [:ccxt_ocx | :rest | :stop, ...]
+  def _rest_stop, do: @rest_stop
+
   @doc false
-  @spec __rest_exception__() :: [:ccxt_ocx | :rest | :exception, ...]
-  def __rest_exception__, do: @rest_exception
+  @spec _rest_exception() :: [:ccxt_ocx | :rest | :exception, ...]
+  def _rest_exception, do: @rest_exception
+
   @doc false
-  @spec __ws_tick__() :: [:ccxt_ocx | :ws | :tick, ...]
-  def __ws_tick__, do: @ws_tick
+  @spec _ws_tick() :: [:ccxt_ocx | :ws | :tick, ...]
+  def _ws_tick, do: @ws_tick
+
   @doc false
-  @spec __runtime_memory__() :: [:ccxt_ocx | :runtime | :memory, ...]
-  def __runtime_memory__, do: @runtime_memory
+  @spec _runtime_memory() :: [:ccxt_ocx | :runtime | :memory, ...]
+  def _runtime_memory, do: @runtime_memory
+
   @doc false
-  @spec __runtime_start__() :: [:ccxt_ocx | :runtime | :start, ...]
-  def __runtime_start__, do: @runtime_start
+  @spec _runtime_start() :: [:ccxt_ocx | :runtime | :start, ...]
+  def _runtime_start, do: @runtime_start
+
   @doc false
-  @spec __runtime_stop__() :: [:ccxt_ocx | :runtime | :stop, ...]
-  def __runtime_stop__, do: @runtime_stop
+  @spec _runtime_stop() :: [:ccxt_ocx | :runtime | :stop, ...]
+  def _runtime_stop, do: @runtime_stop
 end

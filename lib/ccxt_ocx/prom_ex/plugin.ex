@@ -108,7 +108,7 @@ if Code.ensure_loaded?(PromEx.Plugin) do
 
     @spec runtime_event_metrics() :: Event.t()
     defp runtime_event_metrics do
-      memory_event = T.__runtime_memory__()
+      memory_event = T._runtime_memory()
       memory_tags = [:server, :pool, :phase]
       memory_tag_values = &normalize_memory_metadata/1
 
@@ -144,8 +144,8 @@ if Code.ensure_loaded?(PromEx.Plugin) do
 
     @spec rest_event_metrics() :: Event.t()
     defp rest_event_metrics do
-      stop_event = T.__rest_stop__()
-      exception_event = T.__rest_exception__()
+      stop_event = T._rest_stop()
+      exception_event = T._rest_exception()
       rest_tags = [:exchange, :method]
       rest_tag_values = &normalize_rest_metadata/1
       exception_tags = [:exchange, :method, :kind]
@@ -181,7 +181,7 @@ if Code.ensure_loaded?(PromEx.Plugin) do
 
     @spec ws_event_metrics() :: Event.t()
     defp ws_event_metrics do
-      tick_event = T.__ws_tick__()
+      tick_event = T._ws_tick()
 
       Event.build(:ccxt_ocx_ws_event_metrics, [
         counter(

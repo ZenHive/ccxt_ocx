@@ -9,9 +9,9 @@ defmodule CcxtOcx.TelemetryTest do
     end
 
     test "internal accessors return the documented event names" do
-      assert Telemetry.__runtime_memory__() == [:ccxt_ocx, :runtime, :memory]
-      assert Telemetry.__rest_start__() == [:ccxt_ocx, :rest, :start]
-      assert Telemetry.__ws_tick__() == [:ccxt_ocx, :ws, :tick]
+      assert Telemetry._runtime_memory() == [:ccxt_ocx, :runtime, :memory]
+      assert Telemetry._rest_start() == [:ccxt_ocx, :rest, :start]
+      assert Telemetry._ws_tick() == [:ccxt_ocx, :ws, :tick]
     end
   end
 

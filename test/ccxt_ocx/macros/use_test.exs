@@ -103,34 +103,26 @@ defmodule CcxtOcx.Macros.UseTest do
   # Scope attribute on the caller is a future extension point (see __using__ docs).
   # For v0.1 the important contract is the emitted per-exchange modules.
 
-  # ----------------------------------------------------------------------------
-  # Integration exercise for the ExchangeCaps helper (Task 6b prep for Task 9)
-  # ----------------------------------------------------------------------------
-  # This test actually boots a QuickBEAM, loads the CCXT browser bundle, and
-  # probes a real exchange. It is intentionally separate so the pure resolver
-  # tests stay fast. The first run creates the cache artifact under
-  # priv/exchange_caps/; subsequent runs hit the fast path.
-  describe "CcxtOcx.Macros.ExchangeCaps (probe integration)" do
+  # The QuickBEAM probe integration for `CcxtOcx.Macros.ExchangeCaps` lives in
+  # `exchange_caps_integration_test.exs` — `async: false, @moduletag :integration`
+  # since it boots a runtime and writes to `priv/exchange_caps/`.
+
+  # Pure rejection path — no QuickBEAM, no filesystem touch. Verifies the trust
+  # boundary added in Task 6b: fetch_or_build/1 rejects atoms outside the
+  # known-exchange-id set BEFORE the path is built or Code.eval_file/1 runs.
+  describe "ExchangeCaps.fetch_or_build/1 input validation" do
     alias CcxtOcx.Macros.ExchangeCaps
 
-    test "fetch_or_build/1 returns shaped map and materializes cache file" do
-      id = :deribit
-      caps = ExchangeCaps.fetch_or_build(id)
+    test "raises ArgumentError on an unknown exchange id" do
+      assert_raise ArgumentError, ~r/unknown exchange id/, fn ->
+        ExchangeCaps.fetch_or_build(:not_a_real_exchange)
+      end
+    end
 
-      assert caps.id == id
-      assert is_map(caps.has)
-      assert is_map(caps.urls)
-      assert is_map(caps.timeframes)
-      assert caps.rate_limit == nil or is_integer(caps.rate_limit)
-      assert caps.default_type == nil or is_binary(caps.default_type)
-
-      path = ExchangeCaps.caps_path(id)
-      assert File.exists?(path)
-
-      # The file is a pretty-printed .exs that Code.eval_file can read (already
-      # proven by the read path inside fetch_or_build on second call).
-      {reloaded, _} = Code.eval_file(path)
-      assert reloaded.id == id
+    test "raises ArgumentError on an atom that would traverse the path" do
+      assert_raise ArgumentError, ~r/unknown exchange id/, fn ->
+        ExchangeCaps.fetch_or_build(:"../../tmp/pwn")
+      end
     end
   end
 end

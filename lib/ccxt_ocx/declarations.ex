@@ -36,7 +36,7 @@ defmodule CcxtOcx.Declarations do
   Parse the discovered CCXT declaration surface and return one rich term per
   public unified method.
 
-  See `CcxtOcx.Declarations.Compile.method_term/0` for the exact shape.
+  See `t:CcxtOcx.Declarations.Compile.method_term/0` for the exact shape.
   """
   @spec parse_unified_surface() :: [Compile.method_term()]
   def parse_unified_surface, do: Compile.parse_unified_surface()

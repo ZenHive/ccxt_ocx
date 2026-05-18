@@ -9,7 +9,7 @@ defmodule CcxtOcx.Macros.Use do
   - Exchange id resolution (explicit list, tier expansion via `CcxtOcx.Tiers`, `:all`).
   - High-quality `CompileError` messages.
 
-  It is called exclusively from `CcxtOcx.__using__/1`. Do not call directly.
+  It is called exclusively from the `use CcxtOcx` expansion. Do not call directly.
   """
 
   @type resolved_scope :: %{

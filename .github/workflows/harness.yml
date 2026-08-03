@@ -9,7 +9,7 @@
 # the bundle, the module attribute body raises and compile fails.
 #
 # Customization points (search for "[CUSTOMIZE]"):
-#   1. Branch trigger    — `development` is this project's default branch.
+#   1. Branch trigger    — `main` is this project's default branch.
 #   2. MIX_ENV            — `test`.
 #   3. Coverage threshold — `80` (standard tier, young codebase). Raise to 85
 #                          once coverage stabilizes. Critical-tier (signing /
@@ -26,9 +26,9 @@ name: Harness
 
 on:
   pull_request:
-    branches: [development]
+    branches: [main]
   push:
-    branches: [development]
+    branches: [main]
 
 permissions:
   contents: read

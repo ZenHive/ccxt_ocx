@@ -1,6 +1,6 @@
 schema_version = 2
 project = "ccxt_ocx"
-default_branch = "development"
+default_branch = "main"
 
 [focus]
 phase = 1

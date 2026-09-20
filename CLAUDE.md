@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+@~/.claude/includes/verification-policy.md
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 `ccxt_ocx` is a **macro-first** Elixir wrapper around CCXT — the JS bundle runs inside QuickBEAM, and per-exchange/per-method wrappers are generated at compile time from CCXT's own type definitions. See [ROADMAP.md](ROADMAP.md) for the full vision. CCXT-family sibling of `ccxt_extract` and `ccxt_client`.

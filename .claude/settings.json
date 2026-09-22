@@ -1,11 +1,5 @@
 {
-  "extraKnownMarketplaces": {
-    "deltahedge": {
-      "source": { "source": "github", "repo": "ZenHive/claude-marketplace-elixir" }
-    }
-  },
   "enabledPlugins": {
-    "elixir@deltahedge": true,
-    "elixir-workflows@deltahedge": true
+    "elixir@zenhive": true
   }
 }
